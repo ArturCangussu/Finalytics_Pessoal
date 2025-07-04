@@ -7,12 +7,12 @@ df_filtrado = df[df['Situacao'] == 'EFETIVADA']
 
 df_erro = df[df['Situacao'] != 'EFETIVADA']
 
-df_filtrado['Topico'] = np.where(df_filtrado['Tipo de Pix'] == 'Enviado', 'Despesa', 'Receita')
+df_filtrado['Tópico'] = np.where(df_filtrado['Tipo de Pix'] == 'Enviado', 'Despesa', 'Receita')
 
 
 regras_de_categorizacao = {
-    'MARCOS VINICIUS DOS SANTOS BARRETO': 'Manutencao',
-    'KAIROS': 'Servico administrativo',
+    'MARCOS VINICIUS DOS SANTOS BARRETO': 'Manutenção',
+    'KAIROS': 'Serviço administrativo',
     'IVONETE VIANA DE SOUSA': 'Despesa Mensal',
     'AGUINALDO DIAS DO CARMO': 'Despesa Mensal',
     'FABIANA CARDOSO DOS SANTOS VAZ': 'Despesa Mensal'
@@ -24,6 +24,8 @@ def categorizar_transacao(descricao):
     for palavra_chave, categoria in regras_de_categorizacao.items():
         if palavra_chave.lower() in descricao.lower():
             return categoria
-    return 'Nao categorizado'
+    return 'Não categorizado'
 
-df_filtrado['Subtopico'] = df_filtrado['Remetente/Destinatario'].apply(categorizar_transacao)
+df_filtrado['Subtópico'] = df_filtrado['Remetente/Destinatario'].apply(categorizar_transacao)
+
+print(df_filtrado)
