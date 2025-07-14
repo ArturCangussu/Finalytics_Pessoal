@@ -40,4 +40,7 @@ def categorizar_transacao(descricao):
 df_filtrado['Subtópico'] = df_filtrado['Remetente/Destinatario'].apply(
     categorizar_transacao)
 
-print(df_filtrado)
+df_receitas = df_filtrado[df_filtrado['Tópico'] == 'Receita']
+df_despesas = df_filtrado[df_filtrado['Tópico'] == 'Despesa']
+
+df_receitas['Valor'].sum()
