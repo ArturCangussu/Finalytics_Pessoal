@@ -56,7 +56,7 @@ total_receitas = df_receitas['Valor'].sum()
 saldo_liquido = total_receitas - total_despesas
 
 #separando as despesas por topico
-resumo_despesas = df_despesas.groupby('Subtópico')['Valor'].sum().sort_values()
+resumo_despesas = df_despesas.groupby('Subtópico')['Valor'].sum().sort_values(ascending=False)
 
 #deixando bonito pra printar
 print("\n--- Detalhamento de Despesas por Categoria ---")
@@ -65,4 +65,3 @@ resumo_formatado = resumo_despesas.abs().astype(float).to_string(
     float_format='R$ {:>10,.2f}'.format
 )
 
-print(resumo_despesas)
