@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Seu Relatório Financeiro</title>
+    <style>
+        body { font-family: sans-serif; margin: 2em; }
+        .report-block { border: 1px solid #ccc; padding: 1em; margin-bottom: 1em; }
+        pre { background-color: #f4f4f4; padding: 1em; }
+        h1, h2 { color: #333; }
+    </style>
+</head>
+<body>
+    <h1>📈 Relatório Financeiro</h1>
+
+    <div class="report-block">
+        <h2>Resumo Geral</h2>
+        <p><strong>Receita Total:</strong> R$ {{ total_receitas }}</p>
+        <p><strong>Despesa Total:</strong> R$ {{ total_despesas }}</p>
+        <hr>
+        <p><strong>Saldo Líquido:</strong> R$ {{ saldo_liquido }}</p>
+    </div>
+
+    <div class="report-block">
+        <h2>Detalhamento de Despesas por Categoria</h2>
+        <pre>{{ resumo_despesas|safe }}</pre>
+    </div>
+
+    <a href="/">Analisar Outro Extrato</a>
+</body>
+</html>
