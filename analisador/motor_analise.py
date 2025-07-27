@@ -2,23 +2,25 @@
 import pandas as pd
 import numpy as np
 from decimal import Decimal
+from .models import Regra
 
-# Esta é a nossa única e principal função
-def processar_extrato(arquivo_extrato, arquivo_regras):
+def processar_extrato(arquivo_extrato, usuario_logado):
     
-    # 1. LER OS DADOS USANDO OS ARGUMENTOS DA FUNÇÃO
+    # --- PARTE 1: LEITURA E PREPARAÇÃO ---
     df = pd.read_excel(arquivo_extrato)
-    df_regras = pd.read_excel(arquivo_regras)
-
-    # 2. LÓGICA DE PROCESSAMENTO (tudo o que você já construiu)
     
-    regras_de_categorizacao = dict(
-        zip(df_regras['PalavraChave'], df_regras['Categoria']))
+    regras_do_usuario = Regra.objects.filter(usuario=usuario_logado)
+    regras_de_categorizacao = {
+        regra.palavra_chave: regra.categoria for regra in regras_do_usuario
+    }
 
+    # --- PARTE 2: FILTRAGEM (A PARTE QUE FALTAVA) ---
     df_filtrado = df[df['Situacao'] == 'EFETIVADA']
-    df_filtrado = df_filtrado.copy()
+    df_filtrado = df_filtrado.copy() # Garante que estamos trabalhando com uma cópia
 
-    # Funções de ajuda (podem ficar dentro da função principal)
+    # --- PARTE 3: LIMPEZA E CATEGORIZAÇÃO ---
+    
+    # Funções de ajuda
     def limpar_valor(v):
         try:
             v = str(v)
@@ -35,7 +37,7 @@ def processar_extrato(arquivo_extrato, arquivo_regras):
                 return categoria
         return 'Não categorizado'
 
-    # Aplicando a limpeza e categorização
+    # Aplicando as funções
     df_filtrado['Valor'] = df_filtrado['Valor'].apply(limpar_valor)
     
     df_filtrado['Tópico'] = np.where(
@@ -44,17 +46,20 @@ def processar_extrato(arquivo_extrato, arquivo_regras):
     df_filtrado['Subtópico'] = df_filtrado['Remetente/Destinatario'].apply(
         categorizar_transacao)
 
-    # 3. CÁLCULOS FINAIS
+    # --- PARTE 4: CÁLCULOS FINAIS ---
     
     df_receitas = df_filtrado[df_filtrado['Tópico'] == 'Receita']
     df_despesas = df_filtrado[df_filtrado['Tópico'] == 'Despesa']
 
     total_despesas = df_despesas['Valor'].sum()
     total_receitas = df_receitas['Valor'].sum()
-    saldo_liquido = total_receitas + total_despesas # Usando + porque despesas são negativas (ou - se forem positivas)
+    saldo_liquido = total_receitas - total_despesas # Corrigido para sua lógica de despesas positivas
 
     resumo_despesas = df_despesas.groupby('Subtópico')['Valor'].sum().sort_values(ascending=False)
 
-    # 4. DEVOLVER OS RESULTADOS (SEM PRINT)
-    
-    return total_receitas, total_despesas, saldo_liquido, resumo_despesas
+    # --- PARTE 5: RETORNO DOS DADOS ---
+
+
+# Filtra o DataFrame para pegar apenas as linhas onde o Subtópico é 'Não categorizado'
+    nao_categorizadas = df_filtrado[df_filtrado['Subtópico'] == 'Não categorizado']
+    return total_receitas, total_despesas, saldo_liquido, resumo_despesas, nao_categorizadas

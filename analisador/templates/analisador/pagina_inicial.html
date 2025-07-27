@@ -6,17 +6,13 @@
 </head>
 <body>
     <h1>Analisador Financeiro</h1>
-    <p>Por favor, faça o upload do seu extrato bancário (.xlsx) e do seu arquivo de regras.</p>
+    <p>Por favor, faça o upload do seu extrato bancário (.xlsx).</p>
 
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
         <p>
             <label for="extrato">Arquivo de Extrato:</label>
             <input type="file" name="arquivo_extrato" id="extrato" required>
-        </p>
-        <p>
-            <label for="regras">Arquivo de Regras:</label>
-            <input type="file" name="arquivo_regras" id="regras" required>
         </p>
         <button type="submit">Analisar</button>
     </form>

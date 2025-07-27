@@ -1,38 +1,36 @@
 from django.shortcuts import render
-from .motor_analise import processar_extrato  # Importa nossa função!
-from decimal import Decimal # Importamos para formatar os números
+from django.contrib.auth.decorators import login_required # O segurança que adicionamos
+from .motor_analise import processar_extrato
+from decimal import Decimal
 
+@login_required # <-- Página protegida!
 def pagina_inicial(request):
-    # Verifica se o formulário foi enviado (método POST)
     if request.method == 'POST':
-        # 1. Pega os arquivos que o usuário enviou
         arquivo_extrato = request.FILES.get('arquivo_extrato')
-        arquivo_regras = request.FILES.get('arquivo_regras')
 
-        # Se os arquivos não foram enviados, apenas recarrega a página de upload
-        if not arquivo_extrato or not arquivo_regras:
+        if not arquivo_extrato:
             return render(request, 'analisador/pagina_inicial.html')
 
-        # 2. Chama nossa função do motor_analise para processar os arquivos
-        total_r, total_d, saldo_l, resumo_d = processar_extrato(arquivo_extrato, arquivo_regras)
+        # --- MUDANÇA PRINCIPAL AQUI ---
+        # Não pedimos mais o arquivo de regras.
+        # Passamos o usuário logado (request.user) para a função.
+        total_r, total_d, saldo_l, resumo_d, nao_cat = processar_extrato(arquivo_extrato, request.user)
 
-        # 3. Formata o resumo para exibição na página
+
+        # O resto do código continua igual...
         resumo_formatado = resumo_d.abs().astype(float).to_string(
             header=False,
             float_format='R$ {:>10,.2f}'.format
         )
         
-        # 4. Prepara o "contexto" com os resultados para enviar à página de relatório
         contexto = {
             'total_receitas': f'{total_r:,.2f}',
             'total_despesas': f'{abs(total_d):,.2f}',
             'saldo_liquido': f'{saldo_l:,.2f}',
-            'resumo_despesas': resumo_formatado.replace('\n', '<br>')
+            'resumo_despesas': resumo_formatado.replace('\n', '<br>'),
+            'nao_categorizadas': nao_cat.to_html(classes='table table-striped', index=False)
         }
 
-        # 5. Renderiza a PÁGINA DE RELATÓRIO com os resultados
         return render(request, 'analisador/relatorio.html', contexto)
     
-    # Se não for POST, significa que o usuário está apenas visitando a página
-    # Então, apenas mostramos o formulário de upload
     return render(request, 'analisador/pagina_inicial.html')
