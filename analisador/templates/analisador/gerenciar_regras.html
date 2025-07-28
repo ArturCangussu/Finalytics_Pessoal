@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Gerenciar Regras</title>
+    <style>
+        body { font-family: sans-serif; margin: 2em; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+        th { background-color: #f4f4f4; }
+    </style>
+</head>
+<body>
+    <h1>📋 Minhas Regras de Categorização</h1>
+    <form method="POST">
+        {% csrf_token %}
+        <input type="text" name = "palavra_chave" placeholder="Nova Palavra-Chave" required>
+        <input type = "text" name="categoria" placeholder="Nome da Categoria" required>
+        <button type ="submit">Adicionar Regra</button>
+    </form>
+    <table>
+        <thead>
+            <tr>
+                <th>Palavra-Chave</th>
+                <th>Categoria</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for regra in regras %}
+            <tr>
+                <td>{{ regra.palavra_chave }}</td>
+                <td>{{ regra.categoria }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <br>
+    <a href="{% url 'home' %}">Voltar para a página inicial</a>
+
+</body>
+</html>

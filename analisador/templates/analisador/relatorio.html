@@ -25,6 +25,10 @@
         <h2>Detalhamento de Despesas por Categoria</h2>
         <pre>{{ resumo_despesas|safe }}</pre>
     </div>
+    <div class="report-block">
+    <h2>Detalhamento de Receitas por Categoria</h2>
+    <pre>{{ resumo_receitas|safe }}</pre>
+</div>
 
     <div class="report-block">
     <h2>Transações Não Categorizadas</h2>
@@ -38,5 +42,6 @@
 </div>
 
     <a href="/">Analisar Outro Extrato</a>
+    <a href="{% url 'gerenciar_regras' %}">Gerenciar Minhas Regras</a>
 </body>
 </html>
