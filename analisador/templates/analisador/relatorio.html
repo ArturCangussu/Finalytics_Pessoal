@@ -22,12 +22,21 @@
     </div>
 
     <div class="report-block">
-        <h2>Detalhamento de Despesas por Categoria</h2>
-        <pre>{{ resumo_despesas|safe }}</pre>
-    </div>
-    <div class="report-block">
-    <h2>Detalhamento de Receitas por Categoria</h2>
-    <pre>{{ resumo_receitas|safe }}</pre>
+    <h2>Detalhamento de Despesas por Categoria</h2>
+    <table>
+        <tbody>
+            {% for categoria, total in resumo_despesas.items %}
+            <tr>
+                <td>
+                    <a href="{% url 'detalhe_categoria' nome_categoria=categoria %}">
+                        {{ categoria }}
+                    </a>
+                </td>
+                <td style="text-align: right;">R$ {{ total|floatformat:2 }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </div>
 
     <div class="report-block">

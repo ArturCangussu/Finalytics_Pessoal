@@ -1,9 +1,8 @@
-# Dentro de analisador/motor_analise.py
 import pandas as pd
 import numpy as np
-from .models import Regra
+from .models import Regra, Transacao, Extrato
 
-def processar_extrato(arquivo_extrato, usuario_logado):
+def processar_extrato(arquivo_extrato, usuario_logado, extrato_obj):
     
     # --- PARTE 1: LEITURA E PREPARAÇÃO ---
     df = pd.read_excel(arquivo_extrato)
@@ -48,7 +47,20 @@ def processar_extrato(arquivo_extrato, usuario_logado):
     df_filtrado['Subtópico'] = df_filtrado['Remetente/Destinatario'].apply(
         categorizar_transacao)
 
-    # --- PARTE 4: CÁLCULOS FINAIS ---
+    # --- PARTE 4: SALVANDO TRANSAÇÕES E FAZENDO CÁLCULOS FINAIS ---
+
+
+    for index, linha in df_filtrado.iterrows():
+        Transacao.objects.create(
+            extrato=extrato_obj, 
+            usuario=usuario_logado,
+            data=linha.get('Data', ''),
+            descricao=linha.get('Remetente/Destinatario', ''),
+            valor=linha.get('Valor', 0.0),
+            topico=linha.get('Tópico', ''),
+            subtopico=linha.get('Subtópico', '')
+        )
+    
     df_receitas = df_filtrado[df_filtrado['Tópico'] == 'Receita']
     df_despesas = df_filtrado[df_filtrado['Tópico'] == 'Despesa']
 

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Histórico de Extratos</title>
+    <style>
+        body { font-family: sans-serif; margin: 2em; }
+        ul { list-style-type: none; padding: 0; }
+        li { background-color: #f4f4f4; padding: 1em; margin-bottom: 0.5em; border: 1px solid #ddd;}
+        a { text-decoration: none; color: #0056b3; }
+    </style>
+</head>
+<body>
+    <h1>📚 Histórico de Extratos</h1>
+
+    {% if extratos %}
+        <ul>
+            {% for extrato in extratos %}
+            <li>
+                <a href="{% url 'pagina_relatorio' extrato_id=extrato.id %}">
+            <strong>{{ extrato.mes_referencia }}</strong>
+                </a>
+                    
+                
+                <br>
+                <small>Enviado em: {{ extrato.data_upload }}</small>
+            </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Você ainda não enviou nenhum extrato.</p>
+    {% endif %}
+    
+    <br>
+    <a href="{% url 'home' %}">Analisar Novo Extrato</a>
+
+</body>
+</html>

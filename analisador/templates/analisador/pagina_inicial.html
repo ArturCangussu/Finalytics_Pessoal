@@ -6,16 +6,24 @@
 </head>
 <body>
     <h1>Analisador Financeiro</h1>
-    <p>Por favor, faça o upload do seu extrato bancário (.xlsx).</p>
+
+    <p><a href="{% url 'historico' %}">Ver Histórico de Análises</a></p>
+    <hr>
+
+    <p>Ou faça o upload de um novo extrato bancário (.xlsx).</p>
 
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
+        <p>
+            <label for="mes_ref">Mês de Referência (ex: Julho/2025):</label>
+            <input type="text" name="mes_referencia" id="mes_ref" required>
+        </p>
         <p>
             <label for="extrato">Arquivo de Extrato:</label>
             <input type="file" name="arquivo_extrato" id="extrato" required>
         </p>
         <button type="submit">Analisar</button>
     </form>
-    
+
 </body>
 </html>
