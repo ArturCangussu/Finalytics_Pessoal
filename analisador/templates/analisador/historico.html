@@ -1,38 +1,34 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <title>Histórico de Extratos</title>
-    <style>
-        body { font-family: sans-serif; margin: 2em; }
-        ul { list-style-type: none; padding: 0; }
-        li { background-color: #f4f4f4; padding: 1em; margin-bottom: 0.5em; border: 1px solid #ddd;}
-        a { text-decoration: none; color: #0056b3; }
-    </style>
-</head>
-<body>
-    <h1>📚 Histórico de Extratos</h1>
+{% extends 'analisador/base.html' %}
 
-    {% if extratos %}
-        <ul>
-            {% for extrato in extratos %}
-            <li>
-                <a href="{% url 'pagina_relatorio' extrato_id=extrato.id %}">
-            <strong>{{ extrato.mes_referencia }}</strong>
-                </a>
-                    
-                
-                <br>
-                <small>Enviado em: {{ extrato.data_upload }}</small>
-            </li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p>Você ainda não enviou nenhum extrato.</p>
-    {% endif %}
-    
-    <br>
-    <a href="{% url 'home' %}">Analisar Novo Extrato</a>
+{% block title %}Histórico de Extratos{% endblock %}
 
-</body>
-</html>
+{% block content %}
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+        <h1 class="h2"> Histórico de Extratos</h1>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Uploads Realizados</h5>
+        </div>
+        <div class="card-body">
+            {% if extratos %}
+                <ul class="list-group list-group-flush">
+                    {% for extrato in extratos %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <a href="{% url 'pagina_relatorio' extrato_id=extrato.id %}">
+                                <strong>{{ extrato.mes_referencia }}</strong>
+                            </a>
+                            <br>
+                            <small class="text-muted">Enviado em: {{ extrato.data_upload|date:"d/m/Y \à\s H:i" }}</small>
+                        </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-center text-muted">Você ainda não enviou nenhum extrato.</p>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

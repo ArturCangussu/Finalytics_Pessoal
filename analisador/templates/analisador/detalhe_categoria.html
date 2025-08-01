@@ -1,44 +1,20 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <title>Detalhes de {{ nome_categoria }}</title>
-    <style>
-        body { font-family: sans-serif; margin: 2em; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-        th { background-color: #f4f4f4; }
-    </style>
-</head>
-<body>
-    <h1>Transações da Categoria: {{ nome_categoria }}</h1>
-    
-    {% if transacoes %}
-        <table>
-            <thead>
-                <tr>
-                    <th>Data</th>
-                    <th>Descrição</th>
-                    <th style="text-align: right;">Valor</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for transacao in transacoes %}
-                <tr>
-                    <td>{{ transacao.data }}</td>
-                    <td>{{ transacao.descricao }}</td>
-                    <td style="text-align: right;">R$ {{ transacao.valor }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    {% else %}
-        <p>Nenhuma transação encontrada para esta categoria.</p>
-    {% endif %}
+{% extends 'analisador/base.html' %}
 
-    <br>
-    <a href="javascript:history.back()">Voltar para o Relatório</a> | 
-    <a href="{% url 'home' %}">Analisar Novo Extrato</a>
+{% block title %}Detalhes de {{ nome_categoria }}{% endblock %}
 
-</body>
-</html>
+{% block content %}
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+        <h1 class="h2">Detalhes da Categoria: <span class="text-primary">{{ nome_categoria }}</span></h1>
+        <a href="javascript:history.back()" class="btn btn-secondary">Voltar para o Relatório</a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            {% if transacoes %}
+                {{ transacoes_html|safe }}
+            {% else %}
+                <p class="text-center text-muted">Nenhuma transação encontrada para esta categoria.</p>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

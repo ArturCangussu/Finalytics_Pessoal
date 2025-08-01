@@ -1,30 +1,36 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <title>Analisador Financeiro</title>
-</head>
-<body>
-    <h1>Analisador Financeiro</h1>
+{% extends 'analisador/base.html' %}
 
-    <p><a href="{% url 'historico' %}">Ver Histórico de Análises</a></p>
-    <p><a href="{% url 'comparar' %}">Comparar Múltiplos Extratos</a></p>
-    <hr>
+{% block title %}Página Inicial{% endblock %}
 
-    <p>Ou faça o upload de um novo extrato bancário (.xlsx).</p>
+{% block content %}
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+        <h1 class="h2">Dashboard</h1>
+        </div>
 
-    <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        <p>
-            <label for="mes_ref">Mês de Referência (ex: Julho/2025):</label>
-            <input type="text" name="mes_referencia" id="mes_ref" required>
-        </p>
-        <p>
-            <label for="extrato">Arquivo de Extrato:</label>
-            <input type="file" name="arquivo_extrato" id="extrato" required>
-        </p>
-        <button type="submit">Analisar</button>
-    </form>
-
-</body>
-</html>
+    <div class="row">
+        <div class="col-12 col-lg-8 mx-auto"> <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="card-title mb-0"><i class="bi bi-cloud-arrow-up"></i> Fazer Upload de Novo Extrato</h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text text-muted">Selecione o mês de referência e o arquivo .xlsx para iniciar uma nova análise.</p>
+                    <hr>
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="mes_ref" class="form-label">Mês de Referência:</label>
+                            <input type="text" name="mes_referencia" class="form-control" id="mes_ref" placeholder="Ex: Julho/2025" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="extrato" class="form-label">Arquivo de Extrato (.xlsx):</label>
+                            <input type="file" name="arquivo_extrato" class="form-control" id="extrato" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 mt-3">
+                            <i class="bi bi-play-circle"></i> Iniciar Análise
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

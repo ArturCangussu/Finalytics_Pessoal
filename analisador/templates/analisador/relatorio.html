@@ -1,56 +1,106 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <title>Seu Relatório Financeiro</title>
-    <style>
-        body { font-family: sans-serif; margin: 2em; }
-        .report-block { border: 1px solid #ccc; padding: 1em; margin-bottom: 1em; }
-        pre { background-color: #f4f4f4; padding: 1em; }
-        h1, h2 { color: #333; }
-    </style>
-</head>
-<body>
-    <h1>📈 Relatório Financeiro</h1>
+{% extends 'analisador/base.html' %}
 
-    <div class="report-block">
-        <h2>Resumo Geral</h2>
-        <p><strong>Receita Total:</strong> R$ {{ total_receitas }}</p>
-        <p><strong>Despesa Total:</strong> R$ {{ total_despesas }}</p>
-        <hr>
-        <p><strong>Saldo Líquido:</strong> R$ {{ saldo_liquido }}</p>
+{% block content %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>📈 Relatório: {{ extrato.mes_referencia }}</h1>
+        <div>
+            <a href="{% url 'historico' %}" class="btn btn-secondary">Ver Histórico</a>
+            <a href="{% url 'home' %}" class="btn btn-info">Analisar Outro Extrato</a>
+        </div>
+    </div>
+    
+    <div class="card mb-4">
+        <div class="card-header">
+            <h2>Resumo Geral</h2>
+        </div>
+        <div class="card-body">
+            <p><strong>Receita Total:</strong> R$ {{ total_receitas }}</p>
+            <p><strong>Despesa Total:</strong> R$ {{ total_despesas }}</p>
+            <hr>
+            <p><strong>Saldo Líquido:</strong> R$ {{ saldo_liquido }}</p>
+        </div>
     </div>
 
-    <div class="report-block">
-    <h2>Detalhamento de Despesas por Categoria</h2>
-    <table>
-        <tbody>
-            {% for categoria, total in resumo_despesas.items %}
-            <tr>
-                <td>
-                    <a href="{% url 'detalhe_categoria' nome_categoria=categoria %}">
-                        {{ categoria }}
-                    </a>
-                </td>
-                <td style="text-align: right;">R$ {{ total|floatformat:2 }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
+    <div class="card mb-4">
+        <div class="card-header">
+            <h2>Despesas por Categoria (Gráfico)</h2>
+        </div>
+        <div class="card-body">
+            <canvas id="graficoDespesas"></canvas>
+        </div>
+    </div>
 
-    <div class="report-block">
-    <h2>Transações Não Categorizadas</h2>
-    <p>Considere criar novas regras para as transações abaixo:</p>
+    <div class="card mb-4">
+        <div class="card-header">
+            <h2>Detalhamento de Despesas por Categoria</h2>
+        </div>
+        <div class="card-body">
+            <table class="table table-hover">
+                <tbody>
+                    {% for categoria, total in resumo_despesas.items %}
+                    <tr>
+                        <td><a href="{% url 'detalhe_categoria' nome_categoria=categoria %}">{{ categoria }}</a></td>
+                        <td class="text-end">R$ {{ total|floatformat:2 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
 
-    {% if nao_categorizadas %}
-        {{ nao_categorizadas|safe }}
-    {% else %}
-        <p>Parabéns! Todas as suas transações foram categorizadas.</p>
-    {% endif %}
-</div>
+    <div class="card mb-4">
+        <div class="card-header">
+            <h2>Detalhamento de Receitas por Categoria</h2>
+        </div>
+        <div class="card-body">
+            <table class="table table-hover">
+                <tbody>
+                    {% for categoria, total in resumo_receitas.items %}
+                    <tr>
+                        <td>{{ categoria }}</td>
+                        <td class="text-end">R$ {{ total|floatformat:2 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
 
-    <a href="/">Analisar Outro Extrato</a>
-    <a href="{% url 'gerenciar_regras' %}">Gerenciar Minhas Regras</a>
-</body>
-</html>
+    <div class="card mb-4">
+        <div class="card-header">
+            <h2>Transações Não Categorizadas</h2>
+        </div>
+        <div class="card-body">
+            <p>Considere <a href="{% url 'gerenciar_regras' %}">adicionar novas regras</a> para as transações abaixo:</p>
+            {% if nao_categorizadas %}
+                {{ nao_categorizadas|safe }}
+            {% else %}
+                <p>Parabéns! Todas as suas transações foram categorizadas.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+    const ctx = document.getElementById('graficoDespesas');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: {{ labels_grafico|safe }},
+            datasets: [{
+            label: 'Despesas por Categoria (R$)',
+            data: {{ dados_grafico|safe }},
+            backgroundColor: 'rgba(54, 162, 235, 0.6)',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 1
+            }]
+        },
+        options: {
+            scales: {
+            y: {
+                beginAtZero: true
+            }
+            }
+        }
+    });
+    </script>
+{% endblock %}
