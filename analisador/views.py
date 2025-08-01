@@ -123,3 +123,13 @@ def pagina_relatorio(request, extrato_id):
     }
 
     return render(request, 'analisador/relatorio.html', contexto)
+
+@login_required
+def comparar_extratos(request):
+    # Busca todos os extratos do usuário para listá-los na página
+    extratos = Extrato.objects.filter(usuario=request.user).order_by('-data_upload')
+
+    contexto = {
+        'extratos': extratos
+    }
+    return render(request, 'analisador/comparar.html', contexto)

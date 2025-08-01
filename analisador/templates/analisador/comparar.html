@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Comparar Extratos</title>
+    <style>
+        body { font-family: sans-serif; margin: 2em; }
+        .extrato-item { margin-bottom: 0.5em; }
+    </style>
+</head>
+<body>
+    <h1>📊 Comparar Meses</h1>
+    <p>Selecione os extratos que você deseja comparar lado a lado.</p>
+
+    <form method="POST">
+        {% csrf_token %}
+        
+        {% for extrato in extratos %}
+            <div class="extrato-item">
+                <input type="checkbox" name="extratos_selecionados" value="{{ extrato.id }}" id="extrato-{{ extrato.id }}">
+                <label for="extrato-{{ extrato.id }}">{{ extrato.mes_referencia }}</label>
+            </div>
+        {% endfor %}
+        
+        <br>
+        <button type="submit">Comparar Selecionados</button>
+    </form>
+    
+    <br>
+    <a href="{% url 'home' %}">Voltar para a página inicial</a>
+
+</body>
+</html>
