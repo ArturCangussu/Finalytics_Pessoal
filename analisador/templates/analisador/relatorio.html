@@ -1,17 +1,20 @@
 {% extends 'analisador/base.html' %}
 
+{% block title %}Relatório: {{ extrato.mes_referencia }}{% endblock %}
+
 {% block content %}
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>📈 Relatório: {{ extrato.mes_referencia }}</h1>
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+        <h1 class="h2 mb-0"><i class="bi bi-file-earmark-text me-3"></i>Relatório: {{ extrato.mes_referencia }}</h1>
         <div>
             <a href="{% url 'historico' %}" class="btn btn-secondary">Ver Histórico</a>
             <a href="{% url 'home' %}" class="btn btn-info">Analisar Outro Extrato</a>
         </div>
     </div>
     
+    <!-- Resumo Geral -->
     <div class="card mb-4">
         <div class="card-header">
-            <h2>Resumo Geral</h2>
+            <h2 class="h5 mb-0">Resumo Geral</h2>
         </div>
         <div class="card-body">
             <p><strong>Receita Total:</strong> R$ {{ total_receitas }}</p>
@@ -21,26 +24,32 @@
         </div>
     </div>
 
+    <!-- Gráfico -->
     <div class="card mb-4">
         <div class="card-header">
-            <h2>Despesas por Categoria (Gráfico)</h2>
+            <h2 class="h5 mb-0">Despesas por Categoria (Gráfico)</h2>
         </div>
         <div class="card-body">
             <canvas id="graficoDespesas"></canvas>
         </div>
     </div>
 
+    <!-- Detalhamento de Despesas -->
     <div class="card mb-4">
         <div class="card-header">
-            <h2>Detalhamento de Despesas por Categoria</h2>
+            <h2 class="h5 mb-0">Detalhamento de Despesas por Categoria</h2>
         </div>
         <div class="card-body">
             <table class="table table-hover">
                 <tbody>
-                    {% for categoria, total in resumo_despesas.items %}
+                    {% for index, linha in resumo_despesas.iterrows %}
                     <tr>
-                        <td><a href="{% url 'detalhe_categoria' nome_categoria=categoria %}">{{ categoria }}</a></td>
-                        <td class="text-end">R$ {{ total|floatformat:2 }}</td>
+                        <td>
+                            <a href="{% url 'detalhe_categoria' extrato_id=extrato.id nome_categoria=linha.Subtópico %}">
+                                {{ linha.Subtópico }}
+                            </a>
+                        </td>
+                        <td class="text-end font-monospace">R$ {{ linha.Valor|floatformat:2 }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -48,17 +57,18 @@
         </div>
     </div>
 
+    <!-- Detalhamento de Receitas -->
     <div class="card mb-4">
         <div class="card-header">
-            <h2>Detalhamento de Receitas por Categoria</h2>
+            <h2 class="h5 mb-0">Detalhamento de Receitas por Categoria</h2>
         </div>
         <div class="card-body">
             <table class="table table-hover">
                 <tbody>
-                    {% for categoria, total in resumo_receitas.items %}
+                    {% for index, linha in resumo_receitas.iterrows %}
                     <tr>
-                        <td>{{ categoria }}</td>
-                        <td class="text-end">R$ {{ total|floatformat:2 }}</td>
+                        <td>{{ linha.Subtópico }}</td>
+                        <td class="text-end font-monospace">R$ {{ linha.Valor|floatformat:2 }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -66,9 +76,10 @@
         </div>
     </div>
 
+    <!-- Transações Não Categorizadas -->
     <div class="card mb-4">
         <div class="card-header">
-            <h2>Transações Não Categorizadas</h2>
+            <h2 class="h5 mb-0">Transações Não Categorizadas</h2>
         </div>
         <div class="card-body">
             <p>Considere <a href="{% url 'gerenciar_regras' %}">adicionar novas regras</a> para as transações abaixo:</p>
