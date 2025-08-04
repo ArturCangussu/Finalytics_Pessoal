@@ -25,14 +25,17 @@
     </div>
 
     <!-- Gráfico -->
-    <div class="card mb-4">
-        <div class="card-header">
-            <h2 class="h5 mb-0">Despesas por Categoria (Gráfico)</h2>
-        </div>
-        <div class="card-body">
+<div class="card mb-4">
+    <div class="card-header">
+        <h2 class="h5 mb-0">Despesas por Categoria (Gráfico)</h2>
+    </div>
+    <div class="card-body">
+        <!-- A classe .chart-container agora está em uma div interna -->
+        <div class="chart-container">
             <canvas id="graficoDespesas"></canvas>
         </div>
     </div>
+</div>
 
     <!-- Detalhamento de Despesas -->
     <div class="card mb-4">
@@ -58,38 +61,76 @@
     </div>
 
     <!-- Detalhamento de Receitas -->
-    <div class="card mb-4">
-        <div class="card-header">
-            <h2 class="h5 mb-0">Detalhamento de Receitas por Categoria</h2>
-        </div>
-        <div class="card-body">
+<div class="card mb-4">
+    <div class="card-header">
+        <h2 class="h5 mb-0">Detalhamento de Receitas por Categoria</h2>
+    </div>
+    <div class="card-body">
+        <table class="table table-hover">
+            <tbody>
+                {% for index, linha in resumo_receitas.iterrows %}
+                <tr>
+                    <td>
+                        <!-- A MESMA LÓGICA DE LINK DAS DESPESAS, APLICADA AQUI -->
+                        <a href="{% url 'detalhe_categoria' extrato_id=extrato.id nome_categoria=linha.Subtópico %}">
+                            {{ linha.Subtópico }}
+                        </a>
+                    </td>
+                    <td class="text-end font-monospace">R$ {{ linha.Valor|floatformat:2 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+<div class="card mb-4">
+    <div class="card-header">
+        <h2 class="h5 mb-0">Transações Não Categorizadas</h2>
+    </div>
+    <div class="card-body">
+        <p>Crie regras para as transações abaixo:</p>
+        
+        {% if not nao_categorizadas.empty %}
             <table class="table table-hover">
-                <tbody>
-                    {% for index, linha in resumo_receitas.iterrows %}
+                <thead>
                     <tr>
-                        <td>{{ linha.Subtópico }}</td>
+                        <th>Tópico</th>
+                        <th>Data</th>
+                        <th>Remetente/Destinatário</th>
+                        <th class="text-end">Valor</th>
+                        <th style="width: 30%;">Ação Rápida (Criar Regra)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for index, linha in nao_categorizadas.iterrows %}
+                    <tr>
+                        <td>{{ linha.Tópico }}</td>
+                        <td>{{ linha.Data }}</td>
+                        <td>{{ linha.Remetente_Destinatario }}</td>
                         <td class="text-end font-monospace">R$ {{ linha.Valor|floatformat:2 }}</td>
+                        <td>
+                            <!-- Pequeno formulário para cada linha -->
+                            <form action="{% url 'criar_regra_rapida' %}" method="POST" class="d-flex">
+                                {% csrf_token %}
+                                <!-- Campos escondidos que enviam informações importantes -->
+                                <input type="hidden" name="palavra_chave" value="{{ linha.Remetente_Destinatario }}">
+                                <input type="hidden" name="extrato_id" value="{{ extrato.id }}">
+                                
+                                <!-- Campo visível para o usuário digitar a categoria -->
+                                <input type="text" name="categoria" class="form-control form-control-sm me-2" placeholder="Digite a categoria" required>
+                                <button type="submit" class="btn btn-sm btn-primary">Salvar</button>
+                            </form>
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
-        </div>
+        {% else %}
+            <p>Parabéns! Todas as suas transações foram categorizadas.</p>
+        {% endif %}
     </div>
+</div>
 
-    <!-- Transações Não Categorizadas -->
-    <div class="card mb-4">
-        <div class="card-header">
-            <h2 class="h5 mb-0">Transações Não Categorizadas</h2>
-        </div>
-        <div class="card-body">
-            <p>Considere <a href="{% url 'gerenciar_regras' %}">adicionar novas regras</a> para as transações abaixo:</p>
-            {% if nao_categorizadas %}
-                {{ nao_categorizadas|safe }}
-            {% else %}
-                <p>Parabéns! Todas as suas transações foram categorizadas.</p>
-            {% endif %}
-        </div>
-    </div>
 
     <script>
     const ctx = document.getElementById('graficoDespesas');

@@ -68,7 +68,5 @@ body {
 
 .chart-container {
     position: relative;
-    max-width: 700px;
-    margin: 2rem auto;
-    max-height: 350px; /* Controla a altura máxima do gráfico */
+    height: 350px; /* Usamos 'height' em vez de 'max-height' para ser mais direto */
 }

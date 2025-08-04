@@ -3,11 +3,11 @@ from django.contrib.auth.decorators import login_required
 from .motor_analise import processar_extrato
 from .models import Regra, Transacao, Extrato
 import pandas as pd
-
+from django.urls import reverse
+from django.contrib import messages # Importa o sistema de mensagens do Django
 
 @login_required
 def pagina_inicial(request):
-    # Prepara o contexto para a página ativa desde o início
     contexto = {'active_page': 'home'}
 
     if request.method == 'POST':
@@ -15,8 +15,15 @@ def pagina_inicial(request):
         mes_referencia = request.POST.get('mes_referencia')
 
         if not arquivo_extrato or not mes_referencia:
-            # Se der erro, renderiza a página de novo, mas com o contexto
+            messages.error(request, 'Por favor, preencha todos os campos.')
             return render(request, 'analisador/pagina_inicial.html', contexto)
+        
+        # --- VALIDAÇÃO DO TIPO DE ARQUIVO ---
+        # Verifica se o nome do arquivo termina com .xlsx
+        if not arquivo_extrato.name.endswith('.xlsx'):
+            messages.error(request, 'Erro: O arquivo do extrato deve ser no formato .xlsx.')
+            return render(request, 'analisador/pagina_inicial.html', contexto)
+        # --- FIM DA VALIDAÇÃO ---
 
         novo_extrato = Extrato.objects.create(
             usuario=request.user,
@@ -26,12 +33,13 @@ def pagina_inicial(request):
         
         return redirect('pagina_relatorio', extrato_id=novo_extrato.id)
     
-    # Se for GET, renderiza a página com o contexto
     return render(request, 'analisador/pagina_inicial.html', contexto)
 
 
 @login_required
 def gerenciar_regras(request):
+    extrato_id_origem = request.GET.get('from_report')
+
     if request.method == 'POST':
         nova_palavra = request.POST.get('palavra_chave')
         nova_categoria = request.POST.get('categoria')
@@ -43,12 +51,15 @@ def gerenciar_regras(request):
                 categoria=nova_categoria
             )
         
+        if extrato_id_origem:
+            return redirect(f"{reverse('gerenciar_regras')}?from_report={extrato_id_origem}")
         return redirect('gerenciar_regras')
 
     regras_do_usuario = Regra.objects.filter(usuario=request.user)
     contexto = {
         'regras': regras_do_usuario,
-        'active_page': 'regras' # Garante que o valor correto é 'regras'
+        'active_page': 'regras',
+        'extrato_id_origem': extrato_id_origem
     }
     return render(request, 'analisador/gerenciar_regras.html', contexto)
 
@@ -100,6 +111,9 @@ def pagina_relatorio(request, extrato_id):
         'descricao': 'Remetente/Destinatario', 'data': 'Data',
     })
     
+    df['Data'] = pd.to_datetime(df['Data'])
+    df['Data'] = df['Data'].dt.strftime('%d/%m/%Y')
+    
     df_receitas = df[df['Tópico'] == 'Receita']
     df_despesas = df[df['Tópico'] == 'Despesa']
 
@@ -113,13 +127,14 @@ def pagina_relatorio(request, extrato_id):
     resumo_r_series = df_receitas.groupby('Subtópico')['Valor'].sum().sort_values(ascending=False)
     resumo_r = resumo_r_series.reset_index()
     
-    nao_cat_df = df[df['Subtópico'] == 'Não categorizado']
+    nao_cat_df = df[df['Subtópico'] == 'Não categorizado'].copy()
     colunas_desejadas = ['Tópico', 'Data', 'Remetente/Destinatario', 'Valor']
     
     if nao_cat_df.empty:
         nao_cat = pd.DataFrame(columns=colunas_desejadas)
     else:
         nao_cat = nao_cat_df[colunas_desejadas]
+        nao_cat = nao_cat.rename(columns={'Remetente/Destinatario': 'Remetente_Destinatario'})
     
     labels_grafico = list(resumo_d_series.index)
     dados_grafico = [float(valor) for valor in resumo_d_series.abs().values]
@@ -131,7 +146,7 @@ def pagina_relatorio(request, extrato_id):
         'saldo_liquido': f'{saldo_l:,.2f}',
         'resumo_despesas': resumo_d,
         'resumo_receitas': resumo_r,
-        'nao_categorizadas': nao_cat.to_html(classes='table table-striped', index=False),
+        'nao_categorizadas': nao_cat,
         'labels_grafico': labels_grafico,
         'dados_grafico': dados_grafico,
     }
@@ -181,3 +196,53 @@ def comparar_extratos(request):
         'active_page': 'comparar'
     }
     return render(request, 'analisador/comparar.html', contexto)
+
+@login_required
+def reprocessar_relatorio(request, extrato_id):
+    regras_do_usuario = Regra.objects.filter(usuario=request.user)
+    regras_de_categorizacao = {
+        regra.palavra_chave: regra.categoria for regra in regras_do_usuario
+    }
+
+    def categorizar_transacao(descricao):
+        if not isinstance(descricao, str):
+            return 'Descrição Inválida'
+        for palavra_chave, categoria in regras_de_categorizacao.items():
+            if palavra_chave.lower() in descricao.lower():
+                return categoria
+        return 'Não categorizado'
+
+    transacoes_para_atualizar = Transacao.objects.filter(extrato_id=extrato_id, usuario=request.user)
+
+    for transacao in transacoes_para_atualizar:
+        transacao.subtopico = categorizar_transacao(transacao.descricao)
+        transacao.save()
+
+    return redirect('pagina_relatorio', extrato_id=extrato_id)
+
+@login_required
+def criar_regra_rapida(request):
+    if request.method == 'POST':
+        palavra_chave = request.POST.get('palavra_chave')
+        categoria = request.POST.get('categoria')
+        extrato_id = request.POST.get('extrato_id')
+
+        if palavra_chave and categoria:
+            Regra.objects.get_or_create(
+                usuario=request.user,
+                palavra_chave=palavra_chave,
+                defaults={'categoria': categoria}
+            )
+        
+        if extrato_id:
+            return redirect('reprocessar_relatorio', extrato_id=extrato_id)
+
+    return redirect('home')
+
+@login_required
+def apagar_extrato(request, extrato_id):
+    if request.method == 'POST':
+        extrato = Extrato.objects.get(id=extrato_id, usuario=request.user)
+        extrato.delete()
+    
+    return redirect('historico')
