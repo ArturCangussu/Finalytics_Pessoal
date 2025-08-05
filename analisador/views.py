@@ -5,6 +5,8 @@ from .models import Regra, Transacao, Extrato
 import pandas as pd
 from django.urls import reverse
 from django.contrib import messages # Importa o sistema de mensagens do Django
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth import login
 
 @login_required
 def pagina_inicial(request):
@@ -272,3 +274,67 @@ def apagar_extrato(request, extrato_id):
         extrato.delete()
     
     return redirect('historico')
+
+
+@login_required
+def editar_regra(request, regra_id):
+    # Busca a regra específica, garantindo que pertence ao usuário
+    regra = Regra.objects.get(id=regra_id, usuario=request.user)
+
+    if request.method == 'POST':
+        # Pega os novos dados do formulário
+        regra.palavra_chave = request.POST.get('palavra_chave')
+        regra.categoria = request.POST.get('categoria')
+        regra.save() # Salva as alterações
+        return redirect('gerenciar_regras')
+
+    contexto = {
+        'regra': regra,
+        'active_page': 'regras'
+    }
+    return render(request, 'analisador/editar_regra.html', contexto)
+
+
+@login_required
+def apagar_regra(request, regra_id):
+    if request.method == 'POST':
+        regra = Regra.objects.get(id=regra_id, usuario=request.user)
+        regra.delete()
+    return redirect('gerenciar_regras')
+
+
+
+@login_required
+def editar_transacao(request, transacao_id):
+    transacao = Transacao.objects.get(id=transacao_id, usuario=request.user)
+    
+    if request.method == 'POST':
+        transacao.descricao = request.POST.get('descricao')
+        transacao.subtopico = request.POST.get('subtopico')
+        transacao.save()
+        # Redireciona de volta para o relatório do extrato original
+        return redirect('pagina_relatorio', extrato_id=transacao.extrato.id)
+
+    contexto = {
+        'transacao': transacao
+    }
+    return render(request, 'analisador/editar_transacao.html', contexto)
+
+
+
+
+
+def cadastro_usuario(request):
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            usuario = form.save()
+            login(request, usuario) # Loga o usuário automaticamente após o cadastro
+            return redirect('home') # Redireciona para a página inicial
+    else:
+        form = UserCreationForm()
+    
+    contexto = {
+        'form': form
+    }
+    return render(request, 'analisador/cadastro.html', contexto)

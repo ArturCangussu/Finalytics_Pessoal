@@ -17,6 +17,7 @@
                             <th>Data</th>
                             <th>Descrição</th>
                             <th class="text-end">Valor</th>
+                            <th class="text-center">Ação</th> <!-- Nova Coluna -->
                         </tr>
                     </thead>
                     <tbody>
@@ -25,6 +26,10 @@
                             <td>{{ transacao.data }}</td>
                             <td>{{ transacao.descricao }}</td>
                             <td class="text-end font-monospace">R$ {{ transacao.valor|floatformat:2 }}</td>
+                            <td class="text-center">
+                                <!-- Novo Botão -->
+                                <a href="{% url 'editar_transacao' transacao_id=transacao.id %}" class="btn btn-sm btn-outline-warning">Editar</a>
+                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>

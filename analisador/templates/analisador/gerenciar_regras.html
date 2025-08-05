@@ -53,16 +53,24 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for regra in regras %}
-                    <tr>
-                        <td>{{ regra.palavra_chave }}</td>
-                        <td>{{ regra.categoria }}</td>
-                        <td>
-                            <a href="#" class="btn btn-sm btn-outline-danger">Excluir</a>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
+                    <tbody>
+                        {% for regra in regras %}
+                        <tr>
+                            <td>{{ regra.palavra_chave }}</td>
+                            <td>{{ regra.categoria }}</td>
+                            <td>
+                                <!-- Botão de Editar -->
+                                <a href="{% url 'editar_regra' regra_id=regra.id %}" class="btn btn-sm btn-outline-warning me-2">Editar</a>
+                                
+                                <!-- Formulário/Botão de Apagar -->
+                                <form action="{% url 'apagar_regra' regra_id=regra.id %}" method="POST" class="d-inline" onsubmit="return confirm('Tem certeza que deseja apagar esta regra?');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Apagar</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
             </table>
         </div>
     </div>

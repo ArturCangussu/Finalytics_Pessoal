@@ -11,4 +11,8 @@ urlpatterns = [
     path('relatorio/<int:extrato_id>/categoria/<str:nome_categoria>/', views.detalhe_categoria, name='detalhe_categoria'),
     path('regras/criar-rapido/', views.criar_regra_rapida, name='criar_regra_rapida'),
     path('historico/apagar/<int:extrato_id>/', views.apagar_extrato, name='apagar_extrato'),
+    path('regras/editar/<int:regra_id>/', views.editar_regra, name='editar_regra'),
+    path('regras/apagar/<int:regra_id>/', views.apagar_regra, name='apagar_regra'),
+    path('transacao/editar/<int:transacao_id>/', views.editar_transacao, name='editar_transacao'),
+    path('cadastro/', views.cadastro_usuario, name='cadastro'),
 ]
