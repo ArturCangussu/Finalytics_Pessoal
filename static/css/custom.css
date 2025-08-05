@@ -70,3 +70,41 @@ body {
     position: relative;
     height: 350px; /* Usamos 'height' em vez de 'max-height' para ser mais direto */
 }
+
+
+
+/* --- ESTILOS PARA RESPONSIVIDADE (TELAS PEQUENAS) --- */
+
+/* A 'media query' abaixo só aplica estes estilos em telas com largura máxima de 992px (tablets e celulares) */
+@media (max-width: 992px) {
+    .sidebar {
+        position: fixed; /* Fica fixa na tela */
+        top: 0;
+        left: -280px; /* Começa escondida para fora da tela */
+        z-index: 1030; /* Garante que fique por cima do conteúdo */
+        transition: left 0.3s ease; /* Animação suave ao abrir/fechar */
+    }
+
+    .sidebar.active {
+        left: 0; /* Quando ativa, a sidebar desliza para dentro da tela */
+    }
+
+    .main-content {
+        width: 100%; /* Em telas pequenas, o conteúdo principal ocupa toda a largura */
+    }
+
+    .sidebar-toggle {
+        display: block; /* Mostra o botão hamburger */
+    }
+}
+
+/* Esconde o botão hamburger em telas grandes */
+.sidebar-toggle {
+    display: none;
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    z-index: 1031;
+    background-color: #2c3e50;
+    border: 1px solid #34495e;
+}
