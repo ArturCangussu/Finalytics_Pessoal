@@ -95,74 +95,71 @@ def historico_extratos(request):
 
 @login_required
 def pagina_relatorio(request, extrato_id):
-    # 1. Busca os dados base do banco de dados
     extrato = Extrato.objects.get(id=extrato_id, usuario=request.user)
-    transacoes_qs = Transacao.objects.filter(extrato=extrato)
+    transacoes = Transacao.objects.filter(extrato=extrato)
 
-    # --- INÍCIO DA LÓGICA DE FILTRAGEM ---
-
-    # 2. Pega os parâmetros de filtro da URL (ex: /?q=mercado)
-    search_query = request.GET.get('q', '')
-    data_inicio_str = request.GET.get('data_inicio', '')
-    data_fim_str = request.GET.get('data_fim', '')
-
-    # 3. Converte o QuerySet para DataFrame para facilitar a manipulação
-    df = pd.DataFrame(list(transacoes_qs.values('data', 'descricao', 'valor', 'topico', 'subtopico')))
-
-    # Se o DataFrame estiver vazio, renderiza um relatório vazio
-    if df.empty:
-        contexto = {
-            'extrato': extrato, 'total_receitas': '0,00', 'total_despesas': '0,00',
-            'saldo_liquido': '0,00', 'resumo_despesas': None, 'resumo_receitas': None,
-            'nao_categorizadas': pd.DataFrame(), 'labels_grafico': [], 'dados_grafico': [],
-            'search_query': search_query, 'data_inicio': data_inicio_str, 'data_fim': data_fim_str,
-        }
+    if not transacoes.exists():
+        # ... (código para relatório vazio) ...
         return render(request, 'analisador/relatorio.html', contexto)
 
-    # 4. Prepara a coluna de data para a filtragem
-    df['data_dt'] = pd.to_datetime(df['data'])
-
-    # 5. Aplica os filtros no DataFrame
-    if search_query:
-        df = df[df['descricao'].str.contains(search_query, case=False, na=False)]
+    df = pd.DataFrame(list(transacoes.values('data', 'descricao', 'valor', 'topico', 'subtopico')))
+    df['valor'] = pd.to_numeric(df['valor'], errors='coerce').fillna(0)
     
-    if data_inicio_str:
-        df = df[df['data_dt'] >= pd.to_datetime(data_inicio_str)]
+    # --- INÍCIO DA LÓGICA DE LIMPEZA (MOVIDA PARA CÁ) ---
+    def _limpar_descricao_inteligente(descricao):
+        if pd.isna(descricao) or not str(descricao).strip():
+            return str(descricao) # Retorna o original se for vazio
+        
+        descricao_str = str(descricao)
+        try:
+            parts = descricao_str.split(' - ')
+            if len(parts) > 1:
+                # Procura pela primeira parte que não pareça um código/CNPJ
+                for part in parts[1:]:
+                    if not any(char.isdigit() for char in part[:4]):
+                        return part.strip()
+                return parts[1].strip()
+        except:
+            pass
+        return descricao_str
+    
+    # Cria a coluna limpa para exibição
+    df['DescricaoLimpa'] = df['descricao'].apply(_limpar_descricao_inteligente)
+    # --- FIM DA LÓGICA DE LIMPEZA ---
 
-    if data_fim_str:
-        df = df[df['data_dt'] <= pd.to_datetime(data_fim_str)]
-
-    # --- FIM DA LÓGICA DE FILTRAGEM ---
-
-    # O resto do código agora opera sobre o 'df' já filtrado
     df = df.rename(columns={
         'subtopico': 'Subtópico', 'valor': 'Valor', 'topico': 'Tópico',
         'descricao': 'Remetente/Destinatario', 'data': 'Data',
     })
     
-    df['Data'] = df['data_dt'].dt.strftime('%d/%m/%Y')
+    df['Data'] = pd.to_datetime(df['Data'], dayfirst=True, errors='coerce').dt.strftime('%d/%m/%Y')
     
-    # ... (O resto dos seus cálculos de totais, resumos, etc. continua aqui) ...
     df_receitas = df[df['Tópico'] == 'Receita']
     df_despesas = df[df['Tópico'] == 'Despesa']
+
     total_r = df_receitas['Valor'].sum()
     total_d = df_despesas['Valor'].sum()
     saldo_l = total_r - total_d
+
     resumo_d_series = df_despesas.groupby('Subtópico')['Valor'].sum().sort_values(ascending=False)
     resumo_d = resumo_d_series.reset_index()
+    
     resumo_r_series = df_receitas.groupby('Subtópico')['Valor'].sum().sort_values(ascending=False)
     resumo_r = resumo_r_series.reset_index()
+    
     nao_cat_df = df[df['Subtópico'] == 'Não categorizado'].copy()
-    colunas_desejadas = ['Tópico', 'Data', 'Remetente/Destinatario', 'Valor']
+    # Renomeia a coluna limpa para o template usar
+    nao_cat_df = nao_cat_df.rename(columns={'DescricaoLimpa': 'Remetente_Destinatario'})
+    colunas_desejadas = ['Tópico', 'Data', 'Remetente_Destinatario', 'Valor']
+    
     if nao_cat_df.empty:
         nao_cat = pd.DataFrame(columns=colunas_desejadas)
     else:
-        nao_cat = nao_cat_df[colunas_desejadas].rename(columns={'Remetente/Destinatario': 'Remetente_Destinatario'})
+        nao_cat = nao_cat_df[colunas_desejadas]
     
     labels_grafico = list(resumo_d_series.index)
     dados_grafico = [float(valor) for valor in resumo_d_series.abs().values]
     
-    # 6. Passa os valores dos filtros de volta para o template
     contexto = {
         'extrato': extrato,
         'total_receitas': f'{total_r:,.2f}',
@@ -173,12 +170,14 @@ def pagina_relatorio(request, extrato_id):
         'nao_categorizadas': nao_cat,
         'labels_grafico': labels_grafico,
         'dados_grafico': dados_grafico,
-        'search_query': search_query,
-        'data_inicio': data_inicio_str,
-        'data_fim': data_fim_str,
+        'valor_total_despesas_detalhe': total_d,
+        'valor_total_receitas_detalhe': total_r,
     }
 
     return render(request, 'analisador/relatorio.html', contexto)
+
+
+
 
 
 

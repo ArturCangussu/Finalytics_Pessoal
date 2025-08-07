@@ -34,3 +34,33 @@ class Transacao(models.Model):
 
     def __str__(self):
         return f"{self.data} - {self.descricao} - {self.valor}"
+    
+
+    @property
+    def descricao_limpa(self):
+        """
+        Retorna uma versão limpa da descrição, tentando extrair a parte mais
+        relevante, assim como na view do relatório.
+        """
+        descricao_str = str(self.descricao or '') # Garante que temos uma string
+        if not descricao_str.strip():
+            return descricao_str # Retorna vazio se não houver nada
+
+        try:
+            parts = descricao_str.split(' - ')
+            if len(parts) > 1:
+                # Tenta encontrar a parte mais "humana" da descrição
+                for part in parts[1:]:
+                    cleaned_part = part.strip()
+                    # Heurística: se não começar com muitos números, é um bom candidato
+                    if cleaned_part and not any(char.isdigit() for char in cleaned_part[:4]):
+                        return cleaned_part
+                
+                # Se não encontrar um candidato bom, retorna o primeiro pedaço após o " - "
+                return parts[1].strip()
+        except Exception:
+            # Se qualquer erro ocorrer, apenas retorne a descrição original
+            return descricao_str
+            
+        # Se não houver " - " na descrição, retorne a original
+        return descricao_str

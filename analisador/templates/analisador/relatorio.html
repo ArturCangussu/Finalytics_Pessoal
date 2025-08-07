@@ -79,9 +79,16 @@
                                 {{ linha.Subtópico }}
                             </a>
                         </td>
-                        <td class="text-end font-monospace">R$ {{ linha.Valor|floatformat:2 }}</td>
+                        <td class="text-end font-monospace valor-despesa">R$ {{ linha.Valor|floatformat:2 }}</td>
                     </tr>
                     {% endfor %}
+                                <tfoot>
+                <tr class="table-group-divider"> <td class="valor-despesa">Total Despesas</td>
+                    <td class="text-end font-monospace  valor-despesa">
+                        R$ {{ valor_total_despesas_detalhe|floatformat:2 }}
+                    </td>
+                </tr>
+            </tfoot>
                 </tbody>
             </table>
         </div>
@@ -103,9 +110,16 @@
                             {{ linha.Subtópico }}
                         </a>
                     </td>
-                    <td class="text-end font-monospace">R$ {{ linha.Valor|floatformat:2 }}</td>
+                    <td class="text-end font-monospace valor-receita">R$ {{ linha.Valor|floatformat:2 }}</td>
                 </tr>
                 {% endfor %}
+                                                <tfoot>
+                <tr class="table-group-divider"> <td class="valor-receita">Total Despesas</td>
+                    <td class="text-end font-monospace  valor-receita">
+                        R$ {{ valor_total_despesas_detalhe|floatformat:2 }}
+                    </td>
+                </tr>
+            </tfoot>
             </tbody>
         </table>
     </div>
@@ -134,7 +148,9 @@
                         <td>{{ linha.Tópico }}</td>
                         <td>{{ linha.Data }}</td>
                         <td>{{ linha.Remetente_Destinatario }}</td>
-                        <td class="text-end font-monospace">R$ {{ linha.Valor|floatformat:2 }}</td>
+                            <td class="text-end font-monospace {% if linha.Tópico == 'Despesa' %}valor-despesa{% elif linha.Tópico == 'Receita' %}valor-receita{% endif %}">
+                            R$ {{ linha.Valor|floatformat:2 }}
+                        </td>
                         <td>
                             <!-- Pequeno formulário para cada linha -->
                             <form action="{% url 'criar_regra_rapida' %}" method="POST" class="d-flex">
