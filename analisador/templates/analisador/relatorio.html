@@ -201,5 +201,34 @@
                 }
             });
         }
+
+
+
+            const formLote = document.getElementById('form-lote');
+    if (formLote) {
+        formLote.addEventListener('submit', function(event) {
+            // Pega todos os checkboxes que estão marcados
+            const checkboxesMarcados = document.querySelectorAll('.checkbox-transacao:checked');
+
+            // Se nenhum estiver marcado, avisa o usuário e impede o envio
+            if (checkboxesMarcados.length === 0) {
+                alert('Por favor, selecione pelo menos uma transação para categorizar.');
+                event.preventDefault(); // Impede o envio do formulário
+                return;
+            }
+            
+            const containerInputs = document.getElementById('hidden-inputs-lote');
+            containerInputs.innerHTML = ''; // Limpa inputs de envios anteriores
+
+            // Para cada checkbox marcado, cria um input invisível dentro do formulário de lote
+            checkboxesMarcados.forEach(function(checkbox) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'palavras_chave_selecionadas';
+                input.value = checkbox.value;
+                containerInputs.appendChild(input);
+            });
+        });
+    }
     </script>
 {% endblock %}
