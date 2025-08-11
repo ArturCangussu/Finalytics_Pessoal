@@ -93,88 +93,100 @@ def historico_extratos(request):
     return render(request, 'analisador/historico.html', contexto)
 
 
+# Em analisador/views.py
+
 @login_required
 def pagina_relatorio(request, extrato_id):
     extrato = Extrato.objects.get(id=extrato_id, usuario=request.user)
     transacoes = Transacao.objects.filter(extrato=extrato)
 
-    # Pega os valores dos filtros da URL (se existirem)
-    search_query = request.GET.get('q')
-    data_inicio = request.GET.get('data_inicio')
-    data_fim = request.GET.get('data_fim')
-
-    # Se não houver transações, retorna um contexto vazio
     if not transacoes.exists():
-        contexto_vazio = {
+        # ... (seu código para relatório vazio continua igual) ...
+        # Adaptei o contexto vazio para já incluir as novas variáveis
+        contexto = {
             'extrato': extrato, 'total_receitas': '0,00', 'total_despesas': '0,00', 'saldo_liquido': '0,00',
             'resumo_despesas': pd.DataFrame(), 'resumo_receitas': pd.DataFrame(), 'nao_categorizadas': pd.DataFrame(),
-            'labels_grafico': [], 'dados_grafico': [], 'valor_total_despesas_detalhe': 0, 'valor_total_receitas_detalhe': 0,
-            'labels_grafico_receitas': [], 'dados_grafico_receitas': []
+            'valor_total_despesas_detalhe': 0, 'valor_total_receitas_detalhe': 0,
+            'labels_grafico': [], 'dados_grafico': [],
+            'labels_grafico_receitas': [], 'dados_grafico_receitas': [] # (NOVO)
         }
-        return render(request, 'analisador/relatorio.html', contexto_vazio)
+        return render(request, 'analisador/relatorio.html', contexto)
 
-    # --- Início do processamento com Pandas ---
-    df = pd.DataFrame(list(transacoes.values('data', 'descricao', 'valor', 'topico', 'subtopico', 'origem_descricao')))
-
-    # ETAPA DE FILTRO: Aplicar filtros ANTES de qualquer cálculo
-    if not df.empty:
-        df['data_dt'] = pd.to_datetime(df['data'], errors='coerce') # Coluna técnica para filtrar
-        if search_query:
-            df = df[df['descricao'].str.contains(search_query, case=False, na=False)]
-        if data_inicio:
-            df = df[df['data_dt'] >= pd.to_datetime(data_inicio)]
-        if data_fim:
-            df = df[df['data_dt'] <= pd.to_datetime(data_fim)]
-
-    # Se o DataFrame ficou vazio após o filtro, trate como se não houvesse transações
-    if df.empty:
-        # (código para contexto vazio aqui, omitido por brevidade, mas pode ser adicionado se necessário)
-        pass
-
-    # --- Continuação do processamento com o DataFrame (agora já filtrado) ---
+    df = pd.DataFrame(list(transacoes.values('data', 'descricao', 'valor', 'topico', 'subtopico')))
     df['valor'] = pd.to_numeric(df['valor'], errors='coerce').fillna(0)
-    df['Data'] = pd.to_datetime(df['data'], errors='coerce').dt.strftime('%d/%m/%Y')
+    
+    # --- LÓGICA DE LIMPEZA (igual a sua) ---
+    def _limpar_descricao_inteligente(descricao):
+        if pd.isna(descricao) or not str(descricao).strip():
+            return str(descricao)
+        descricao_str = str(descricao)
+        try:
+            parts = descricao_str.split(' - ')
+            if len(parts) > 1:
+                for part in parts[1:]:
+                    if not any(char.isdigit() for char in part[:4]):
+                        return part.strip()
+                return parts[1].strip()
+        except:
+            pass
+        return descricao_str
+    df['DescricaoLimpa'] = df['descricao'].apply(_limpar_descricao_inteligente)
+    # --- FIM DA LÓGICA DE LIMPEZA ---
 
-    def limpar_descricao_para_exibicao(d):
-        d_str = str(d or '')
-        if ' - ' in d_str: return d_str.split(' - ')[-1].strip()
-        return d_str
-    df['DescricaoLimpa'] = df['descricao'].apply(limpar_descricao_para_exibicao)
-
-    df = df.rename(columns={'subtopico': 'Subtópico', 'valor': 'Valor', 'topico': 'Tópico', 'DescricaoLimpa': 'Remetente_Destinatario'})
+    df = df.rename(columns={
+        'subtopico': 'Subtópico', 'valor': 'Valor', 'topico': 'Tópico',
+        'descricao': 'Remetente/Destinatario', 'data': 'Data',
+    })
+    
+    df['Data'] = pd.to_datetime(df['Data'], dayfirst=True, errors='coerce').dt.strftime('%d/%m/%Y')
     
     df_receitas = df[df['Tópico'] == 'Receita']
     df_despesas = df[df['Tópico'] == 'Despesa']
-    total_r, total_d = df_receitas['Valor'].sum(), df_despesas['Valor'].sum()
+
+    total_r = df_receitas['Valor'].sum()
+    total_d = df_despesas['Valor'].sum()
     saldo_l = total_r - total_d
 
     resumo_d_series = df_despesas.groupby('Subtópico')['Valor'].sum().sort_values(ascending=False)
     resumo_d = resumo_d_series.reset_index()
+    
     resumo_r_series = df_receitas.groupby('Subtópico')['Valor'].sum().sort_values(ascending=False)
     resumo_r = resumo_r_series.reset_index()
     
     nao_cat_df = df[df['Subtópico'] == 'Não categorizado'].copy()
-    colunas_desejadas = ['Tópico', 'Data', 'Remetente_Destinatario', 'Valor', 'origem_descricao']
-    nao_cat = nao_cat_df.reindex(columns=colunas_desejadas).fillna('')
+    nao_cat_df = nao_cat_df.rename(columns={'DescricaoLimpa': 'Remetente_Destinatario'})
+    colunas_desejadas = ['Tópico', 'Data', 'Remetente_Destinatario', 'Valor']
     
-    # DADOS PARA GRÁFICO DE DESPESAS
+    if nao_cat_df.empty:
+        nao_cat = pd.DataFrame(columns=colunas_desejadas)
+    else:
+        nao_cat = nao_cat_df[colunas_desejadas]
+    
+    # Dados para o gráfico de Despesas (existente)
     labels_grafico = list(resumo_d_series.index)
     dados_grafico = [float(valor) for valor in resumo_d_series.abs().values]
-    
-    # DADOS PARA GRÁFICO DE RECEITAS (NOVO)
+
+    # Dados para o gráfico de Receitas (NOVO)
     labels_grafico_receitas = list(resumo_r_series.index)
     dados_grafico_receitas = [float(valor) for valor in resumo_r_series.abs().values]
     
     contexto = {
-        'extrato': extrato, 'total_receitas': f'{total_r:,.2f}', 'total_despesas': f'{abs(total_d):,.2f}', 'saldo_liquido': f'{saldo_l:,.2f}',
-        'resumo_despesas': resumo_d, 'resumo_receitas': resumo_r, 'nao_categorizadas': nao_cat,
-        'valor_total_despesas_detalhe': total_d, 'valor_total_receitas_detalhe': total_r,
-        # Variáveis para os dois gráficos
-        'labels_grafico': labels_grafico, 'dados_grafico': dados_grafico,
-        'labels_grafico_receitas': labels_grafico_receitas, 'dados_grafico_receitas': dados_grafico_receitas,
-        # Devolve os filtros para manter os campos preenchidos
-        'search_query': search_query, 'data_inicio': data_inicio, 'data_fim': data_fim,
+        'extrato': extrato,
+        'total_receitas': f'{total_r:,.2f}',
+        'total_despesas': f'{abs(total_d):,.2f}',
+        'saldo_liquido': f'{saldo_l:,.2f}',
+        'resumo_despesas': resumo_d,
+        'resumo_receitas': resumo_r,
+        'nao_categorizadas': nao_cat,
+        'valor_total_despesas_detalhe': total_d,
+        'valor_total_receitas_detalhe': total_r,
+        'labels_grafico': labels_grafico,
+        'dados_grafico': dados_grafico,
+        # Adicionando os novos dados do gráfico de receitas ao contexto (NOVO)
+        'labels_grafico_receitas': labels_grafico_receitas,
+        'dados_grafico_receitas': dados_grafico_receitas,
     }
+
     return render(request, 'analisador/relatorio.html', contexto)
 
 
