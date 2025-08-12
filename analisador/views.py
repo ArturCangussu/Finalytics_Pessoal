@@ -182,7 +182,6 @@ def pagina_relatorio(request, extrato_id):
         'valor_total_receitas_detalhe': total_r,
         'labels_grafico': labels_grafico,
         'dados_grafico': dados_grafico,
-        # Adicionando os novos dados do gráfico de receitas ao contexto (NOVO)
         'labels_grafico_receitas': labels_grafico_receitas,
         'dados_grafico_receitas': dados_grafico_receitas,
     }
