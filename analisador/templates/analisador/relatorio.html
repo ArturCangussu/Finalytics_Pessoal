@@ -178,20 +178,8 @@
     if (ctxDespesas && {{ dados_grafico|safe }}.length > 0) {
         new Chart(ctxDespesas, {
             type: 'bar',
-            data: {
-                labels: {{ labels_grafico|safe }},
-                datasets: [{
-                    label: 'Despesas por Categoria (R$)',
-                    data: {{ dados_grafico|safe }},
-                    backgroundColor: 'rgba(220, 53, 69, 0.6)',
-                    borderColor: 'rgba(220, 53, 69, 1)',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                scales: { y: { beginAtZero: true } },
-                plugins: { legend: { display: false } }
-            }
+            data: { labels: {{ labels_grafico|safe }}, datasets: [{ label: 'Despesas por Categoria (R$)', data: {{ dados_grafico|safe }}, backgroundColor: 'rgba(220, 53, 69, 0.6)', borderColor: 'rgba(220, 53, 69, 1)', borderWidth: 1 }] },
+            options: { scales: { y: { beginAtZero: true } }, plugins: { legend: { display: false } } }
         });
     }
 
@@ -200,33 +188,55 @@
     if (ctxReceitas && {{ dados_grafico_receitas|safe }}.length > 0) {
         new Chart(ctxReceitas, {
             type: 'bar',
-            data: {
-                labels: {{ labels_grafico_receitas|safe }},
-                datasets: [{
-                    label: 'Receitas por Categoria (R$)',
-                    data: {{ dados_grafico_receitas|safe }},
-                    backgroundColor: 'rgba(25, 135, 84, 0.6)',
-                    borderColor: 'rgba(25, 135, 84, 1)',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                scales: { y: { beginAtZero: true } },
-                plugins: { legend: { display: false } }
-            }
+            data: { labels: {{ labels_grafico_receitas|safe }}, datasets: [{ label: 'Receitas por Categoria (R$)', data: {{ dados_grafico_receitas|safe }}, backgroundColor: 'rgba(25, 135, 84, 0.6)', borderColor: 'rgba(25, 135, 84, 1)', borderWidth: 1 }] },
+            options: { scales: { y: { beginAtZero: true } }, plugins: { legend: { display: false } } }
         });
     }
 
-    // Script para o checkbox "Selecionar Todos"
+    // =========================================================================
+    // =========== LÓGICA DE INTERAÇÃO DA TABELA (VERSÃO CORRIGIDA) ============
+    // =========================================================================
+    
+    // 1. Função reutilizável para mudar a cor da linha
+    function atualizarDestaqueLinha(checkbox) {
+        const tableRow = checkbox.closest('tr');
+        if (tableRow) {
+            if (checkbox.checked) {
+                tableRow.classList.add('linha-selecionada');
+            } else {
+                tableRow.classList.remove('linha-selecionada');
+            }
+        }
+    }
+
+    // 2. Lógica para os checkboxes individuais
+    const checkboxesTransacao = document.querySelectorAll('.checkbox-transacao');
+    checkboxesTransacao.forEach(checkbox => {
+        // "Ouve" o clique individual
+        checkbox.addEventListener('change', () => {
+            atualizarDestaqueLinha(checkbox);
+        });
+    });
+
+    // 3. Lógica ATUALIZADA para o "Selecionar Todos"
     const selecionarTodos = document.getElementById('selecionar-todos');
     if (selecionarTodos) {
         selecionarTodos.addEventListener('click', function(event) {
-            let checkboxes = document.querySelectorAll('.checkbox-transacao');
-            for (let checkbox of checkboxes) {
-                checkbox.checked = event.target.checked;
-            }
+            const isChecked = event.target.checked;
+            
+            // Para cada checkbox da tabela...
+            checkboxesTransacao.forEach(chk => {
+                // ...primeiro, atualiza o estado (marcado/desmarcado)
+                chk.checked = isChecked;
+                // ...depois, chama a função para atualizar a cor da linha
+                atualizarDestaqueLinha(chk);
+            });
         });
     }
+
+    // =========================================================================
+    // ================== LÓGICA DOS FORMULÁRIOS (SEM ALTERAÇÃO) ===============
+    // =========================================================================
 
     // SCRIPT PARA CONECTAR OS CHECKBOXES AO FORMULÁRIO DE LOTE
     const formLote = document.getElementById('form-lote');
@@ -252,57 +262,24 @@
 
     // SCRIPT PARA GUIAR O USUÁRIO AO FORMULÁRIO DE LOTE
     const individualForms = document.querySelectorAll('.form-rapido-individual');
-    const batchForm = document.getElementById('form-lote'); 
-
+    const batchForm = document.getElementById('form-lote');
     if (individualForms.length > 0 && batchForm) {
         individualForms.forEach(form => {
             form.addEventListener('submit', function(event) {
                 const anyCheckboxChecked = document.querySelector('.checkbox-transacao:checked');
-                
                 if (anyCheckboxChecked) {
                     event.preventDefault();
-                    
-                    // A rolagem continua mirando no formulário para posicionamento correto
                     batchForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    
-                    // ====================== AQUI ESTÁ A CORREÇÃO ======================
-                    // 1. Encontramos o elemento VISÍVEL dentro do formulário (o rodapé do card)
                     const flashTarget = batchForm.querySelector('.card-footer');
-                    
-                    // 2. Aplicamos o efeito de flash neste elemento, se ele existir
                     if (flashTarget) {
-                        flashTarget.classList.add('flash-on-scroll'); 
-                        
+                        flashTarget.classList.add('flash-on-scroll');
                         flashTarget.addEventListener('animationend', () => {
                             flashTarget.classList.remove('flash-on-scroll');
                         }, { once: true });
                     }
-                    // =================================================================
                 }
             });
         });
     }
-
-
-
-
-    document.addEventListener('DOMContentLoaded', function() {
-        const checkboxes = document.querySelectorAll('.checkbox-transacao');
-
-        checkboxes.forEach(checkbox => {
-            checkbox.addEventListener('change', function() {
-                // Encontra o elemento <tr> mais próximo (a linha da tabela)
-                const tableRow = this.closest('tr');
-                if (tableRow) {
-                    // Se o checkbox está marcado, adiciona a classe. Se não, remove.
-                    if (this.checked) {
-                        tableRow.classList.add('linha-selecionada');
-                    } else {
-                        tableRow.classList.remove('linha-selecionada');
-                    }
-                }
-            });
-        });
-    });
 </script>
 {% endblock %}
