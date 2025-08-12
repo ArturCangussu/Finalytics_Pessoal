@@ -121,24 +121,3 @@ body {
     color: var(--vermelho-perigo) !important; /* Adicionado !important como garantia */
     font-weight: bold;
 }
-
-
-@keyframes flash-effect {
-    0% {
-        background-color: transparent;
-        box-shadow: none;
-    }
-    25% {
-        background-color: rgba(13, 110, 253, 0.3); /* Um flash azul claro (cor primária) */
-        box-shadow: 0 0 15px rgba(13, 110, 253, 0.5);
-    }
-    100% {
-        background-color: transparent;
-        box-shadow: none;
-    }
-}
-
-.flash-on-scroll {
-    animation: flash-effect 2s ease-out; /* Duração pode ser ajustada */
-    border-radius: 5px; /* Garante que o shadow fique contido */
-}
