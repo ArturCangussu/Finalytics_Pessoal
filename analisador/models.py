@@ -13,6 +13,11 @@ class Extrato(models.Model):
 
 # Este model você já tinha
 class Regra(models.Model):
+    TIPO_TRANSACAO_CHOICES = [
+        ('Despesa', 'Despesa'),
+        ('Receita', 'Receita'),
+    ]
+
     usuario = models.ForeignKey(User, on_delete=models.CASCADE)
     palavra_chave = models.CharField(max_length=100)
     categoria = models.CharField(max_length=100)
