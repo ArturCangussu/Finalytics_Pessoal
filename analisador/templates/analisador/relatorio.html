@@ -278,5 +278,52 @@
             });
         });
     }
+
+
+
+
+    <script>
+// =========================================================================
+// SCRIPT PARA GUIAR O USUÁRIO AO FORMULÁRIO DE LOTE
+// =========================================================================
+document.addEventListener('DOMContentLoaded', function() {
+    // Seleciona todos os formulários de ação rápida individual
+    const individualForms = document.querySelectorAll('.form-rapido-individual');
+    
+    // Seleciona o formulário de lote (o alvo para onde vamos rolar)
+    const batchForm = document.getElementById('form-lote');
+
+    if (individualForms.length > 0 && batchForm) {
+        individualForms.forEach(form => {
+            // Adiciona um 'escutador' para o evento de 'submit' (envio)
+            form.addEventListener('submit', function(event) {
+                
+                // Verifica se QUALQUER checkbox de transação está marcado
+                const anyCheckboxChecked = document.querySelector('.checkbox-transacao:checked');
+
+                // Se pelo menos um checkbox estiver marcado...
+                if (anyCheckboxChecked) {
+                    // 1. Impede o envio do formulário individual (o comportamento errado)
+                    event.preventDefault();
+
+                    // 2. Rola a página suavemente até o formulário de lote ficar visível
+                    batchForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                    // 3. Adiciona a classe que ativa a animação de "flash"
+                    batchForm.classList.add('flash-on-scroll');
+
+                    // 4. IMPORTANTE: Remove a classe de animação quando ela terminar.
+                    // Isso garante que o efeito possa acontecer novamente se o usuário repetir a ação.
+                    batchForm.addEventListener('animationend', () => {
+                        batchForm.classList.remove('flash-on-scroll');
+                    }, { once: true }); // A opção {once: true} remove o 'escutador' automaticamente.
+                }
+
+                // Se nenhum checkbox estiver marcado, o formulário é enviado normalmente.
+            });
+        });
+    }
+});
+</script>
 </script>
 {% endblock %}
