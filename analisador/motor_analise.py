@@ -110,7 +110,7 @@ def processar_extrato(arquivo_extrato, usuario_logado, extrato_obj):
             extrato=extrato_obj,
             usuario=usuario_logado,
             data=linha.get('Data', ''),
-            descricao=linha.get('Descricao', ''), # <-- CORREÇÃO: Guarda a descrição ORIGINAL
+            descricao=linha.get('Descricao', ''), 
             valor=linha.get('Valor', 0.0),
             topico=linha.get('Topico', ''),
             subtopico=linha.get('Subtopico', '')
