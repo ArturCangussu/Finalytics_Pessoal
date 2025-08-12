@@ -145,3 +145,9 @@ body {
     animation: flash-effect 2s ease-out; /* Duração pode ser ajustada */
     border-radius: 5px; /* Garante que o shadow fique contido */
 }
+
+
+.linha-selecionada {
+    background-color: rgba(13, 110, 253, 0.15) !important; /* Azul primário com baixa opacidade */
+    transition: background-color 0.2s ease-in-out; /* Transição suave */
+}

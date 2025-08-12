@@ -282,5 +282,27 @@
             });
         });
     }
+
+
+
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const checkboxes = document.querySelectorAll('.checkbox-transacao');
+
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                // Encontra o elemento <tr> mais próximo (a linha da tabela)
+                const tableRow = this.closest('tr');
+                if (tableRow) {
+                    // Se o checkbox está marcado, adiciona a classe. Se não, remove.
+                    if (this.checked) {
+                        tableRow.classList.add('linha-selecionada');
+                    } else {
+                        tableRow.classList.remove('linha-selecionada');
+                    }
+                }
+            });
+        });
+    });
 </script>
 {% endblock %}
