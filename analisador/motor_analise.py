@@ -101,7 +101,7 @@ def processar_extrato(arquivo_extrato, usuario_logado, extrato_obj):
     
     # Aplica a limpeza e a categorização
     df_processado['DescricaoLimpa'] = df_processado['Descricao'].apply(_limpar_descricao_inteligente)
-    df_processado['Subtopico'] = df_processado['Descricao'].apply(categorizar_transacao)
+    df_processado['Subtopico'] = df_processado.apply(categorizar_transacao_por_linha, axis=1)
     # --- FIM DA CORREÇÃO ---
 
     Transacao.objects.filter(extrato=extrato_obj).delete()
