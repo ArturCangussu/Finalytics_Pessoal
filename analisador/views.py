@@ -238,28 +238,43 @@ def comparar_extratos(request):
 
 @login_required
 def reprocessar_relatorio(request, extrato_id):
-    # ... (a preparação das regras continua a mesma)
-    regras_do_usuario = Regra.objects.filter(usuario=request.user)
-    regras_de_categorizacao = { regra.palavra_chave: regra.categoria for regra in regras_do_usuario }
+    """
+    Reprocessa as transações de um extrato, aplicando as regras mais recentes
+    de forma inteligente (considerando palavra-chave E tipo de transação).
+    """
+    # Pega as regras do usuário como uma lista de dicionários para performance
+    regras_do_usuario = list(Regra.objects.filter(usuario=request.user).values())
 
-    def categorizar_transacao(descricao):
-        # ... (a função de categorizar continua a mesma)
-        if not isinstance(descricao, str): return 'Descrição Inválida'
-        for palavra_chave, categoria in regras_de_categorizacao.items():
-            if palavra_chave.lower() in descricao.lower():
-                return categoria
+    def categorizar_transacao_inteligente(descricao, topico):
+        """Função interna que busca a melhor regra para uma transação."""
+        if not isinstance(descricao, str):
+            return 'Não categorizado'
+        
+        # Procura por uma regra que combine a palavra-chave E o tipo
+        for regra in regras_do_usuario:
+            if regra['palavra_chave'].lower() in descricao.lower() and regra['tipo_transacao'] == topico:
+                return regra['categoria']
+            
         return 'Não categorizado'
 
-    transacoes_para_atualizar = Transacao.objects.filter(extrato_id=extrato_id, usuario=request.user)
+    # Busca todas as transações do extrato que não foram travadas manualmente
+    transacoes_para_atualizar = Transacao.objects.filter(
+        extrato_id=extrato_id, 
+        usuario=request.user,
+        categorizacao_manual=False
+    )
 
+    # Itera sobre cada transação para reavaliar sua categoria
     for transacao in transacoes_para_atualizar:
-        # SÓ REPROCESSA SE A TRANSAÇÃO NÃO ESTIVER "TRAVADA"
-        if not transacao.categorizacao_manual:
-            transacao.subtopico = categorizar_transacao(transacao.descricao)
-            transacao.save()
+        # Chama a função de categorização passando a descrição E o tópico
+        transacao.subtopico = categorizar_transacao_inteligente(transacao.descricao, transacao.topico)
+        transacao.save()
 
-    messages.success(request, "O relatório foi reprocessado com sucesso!")
+    messages.success(request, "O relatório foi reprocessado com sucesso usando as regras atualizadas!")
     return redirect('pagina_relatorio', extrato_id=extrato_id)
+
+
+
 
 @login_required
 def criar_regra_rapida(request):
@@ -267,11 +282,14 @@ def criar_regra_rapida(request):
         palavra_chave = request.POST.get('palavra_chave')
         categoria = request.POST.get('categoria')
         extrato_id = request.POST.get('extrato_id')
+        tipo_transacao = request.POST.get('tipo_transacao') # NOVO
 
-        if palavra_chave and categoria:
+        if palavra_chave and categoria and tipo_transacao:
+            # get_or_create agora também verifica o tipo_transacao
             Regra.objects.get_or_create(
                 usuario=request.user,
                 palavra_chave=palavra_chave,
+                tipo_transacao=tipo_transacao, # NOVO
                 defaults={'categoria': categoria}
             )
         
@@ -361,28 +379,31 @@ def cadastro_usuario(request):
 @login_required
 def criar_regras_em_lote(request):
     if request.method == 'POST':
-        # Pega a lista de todas as palavras-chave dos checkboxes que foram marcados
-        palavras_chave = request.POST.getlist('palavras_chave_selecionadas')
-        
-        # Pega a categoria que o usuário digitou no campo de texto
+        # Cada item agora é "palavra|tipo"
+        palavras_chave_com_tipo = request.POST.getlist('palavras_chave_selecionadas') 
         nova_categoria = request.POST.get('categoria_em_lote')
-        
         extrato_id = request.POST.get('extrato_id')
 
-        if palavras_chave and nova_categoria and extrato_id:
-            # Para cada palavra-chave selecionada, cria uma nova regra
-            for palavra in palavras_chave:
-                # Usamos get_or_create para não criar regras duplicadas
-                Regra.objects.get_or_create(
-                    usuario=request.user,
-                    palavra_chave=palavra,
-                    defaults={'categoria': nova_categoria}
-                )
+        if palavras_chave_com_tipo and nova_categoria and extrato_id:
+            regras_criadas = 0
+            for item in palavras_chave_com_tipo:
+                try:
+                    # Separa a palavra_chave do tipo
+                    palavra, tipo = item.split('|')
+                    
+                    Regra.objects.get_or_create(
+                        usuario=request.user,
+                        palavra_chave=palavra,
+                        tipo_transacao=tipo, # NOVO
+                        defaults={'categoria': nova_categoria}
+                    )
+                    regras_criadas += 1
+                except ValueError:
+                    # Ignora itens mal formatados, se houver
+                    continue
             
-            messages.success(request, f'{len(palavras_chave)} regras foram criadas/atualizadas com a categoria "{nova_categoria}".')
-            # Redireciona para reprocessar o relatório e ver o resultado imediatamente
+            messages.success(request, f'{regras_criadas} regras foram criadas/atualizadas com a categoria "{nova_categoria}".')
             return redirect('reprocessar_relatorio', extrato_id=extrato_id)
 
-    # Se algo der errado, ou se não for POST, volta para a home
-    messages.error(request, 'Ocorreu um erro ao processar a solicitação.')
+    messages.error(request, 'Ocorreu um erro ao processar a solicitação em lote.')
     return redirect('home')

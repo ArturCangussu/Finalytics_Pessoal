@@ -56,17 +56,25 @@ def processar_extrato(arquivo_extrato, usuario_logado, extrato_obj):
     else:
         raise ValueError("Formato de extrato não reconhecido.")
 
-    regras_do_usuario = Regra.objects.filter(usuario=usuario_logado)
-    regras_de_categorizacao = {
-        regra.palavra_chave: regra.categoria for regra in regras_do_usuario
-    }
+    # =========================================================================
+    # =========== NOVO BLOCO DE CATEGORIZAÇÃO INTELIGENTE =====================
+    # =========================================================================
 
-    def categorizar_transacao(descricao):
+    # Pega todas as regras do usuário como uma lista de dicionários para performance
+    regras_do_usuario = list(Regra.objects.filter(usuario=usuario_logado).values())
+
+    def categorizar_transacao_por_linha(linha):
+        descricao = linha['Descricao']
+        topico = linha['Topico']  # Pega o Tópico (Receita/Despesa) da linha atual
+
         if not isinstance(descricao, str):
             return 'Não categorizado'
-        for palavra_chave, categoria in regras_de_categorizacao.items():
-            if palavra_chave.lower() in descricao.lower():
-                return categoria
+
+        # Procura por uma regra que combine a palavra-chave E o tipo de transação
+        for regra in regras_do_usuario:
+            if regra['palavra_chave'].lower() in descricao.lower() and regra['tipo_transacao'] == topico:
+                return regra['categoria']
+        
         return 'Não categorizado'
 
     # --- CORREÇÃO NA LÓGICA DE LIMPEZA ---

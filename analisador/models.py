@@ -16,6 +16,8 @@ class Regra(models.Model):
     usuario = models.ForeignKey(User, on_delete=models.CASCADE)
     palavra_chave = models.CharField(max_length=100)
     categoria = models.CharField(max_length=100)
+    tipo_transacao = models.CharField(max_length=7, choices=TIPO_TRANSACAO_CHOICES, default='Despesa')
+
 
     def __str__(self):
         return f"'{self.palavra_chave}' -> '{self.categoria}' (Usuário: {self.usuario.username})"
