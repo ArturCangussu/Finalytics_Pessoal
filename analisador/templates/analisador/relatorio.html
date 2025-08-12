@@ -233,16 +233,13 @@
     if (formLote) {
         formLote.addEventListener('submit', function(event) {
             const checkboxesMarcados = document.querySelectorAll('.checkbox-transacao:checked');
-
             if (checkboxesMarcados.length === 0) {
                 alert('Por favor, selecione pelo menos uma transação para categorizar.');
                 event.preventDefault();
                 return;
             }
-            
             const containerInputs = document.getElementById('hidden-inputs-lote');
-            containerInputs.innerHTML = ''; // Limpa inputs anteriores
-
+            containerInputs.innerHTML = '';
             checkboxesMarcados.forEach(function(checkbox) {
                 const input = document.createElement('input');
                 input.type = 'hidden';
@@ -255,7 +252,7 @@
 
     // SCRIPT PARA GUIAR O USUÁRIO AO FORMULÁRIO DE LOTE
     const individualForms = document.querySelectorAll('.form-rapido-individual');
-    const batchForm = document.getElementById('form-lote'); // Já declarado acima, mas redeclarar não tem problema.
+    const batchForm = document.getElementById('form-lote'); 
 
     if (individualForms.length > 0 && batchForm) {
         individualForms.forEach(form => {
@@ -263,13 +260,24 @@
                 const anyCheckboxChecked = document.querySelector('.checkbox-transacao:checked');
                 
                 if (anyCheckboxChecked) {
-                    event.preventDefault(); // Impede o envio do form errado
-                    batchForm.scrollIntoView({ behavior: 'smooth', block: 'center' }); // Rola até o form certo
-                    batchForm.classList.add('flash-on-scroll'); // Aplica o efeito
+                    event.preventDefault();
                     
-                    batchForm.addEventListener('animationend', () => {
-                        batchForm.classList.remove('flash-on-scroll');
-                    }, { once: true });
+                    // A rolagem continua mirando no formulário para posicionamento correto
+                    batchForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    
+                    // ====================== AQUI ESTÁ A CORREÇÃO ======================
+                    // 1. Encontramos o elemento VISÍVEL dentro do formulário (o rodapé do card)
+                    const flashTarget = batchForm.querySelector('.card-footer');
+                    
+                    // 2. Aplicamos o efeito de flash neste elemento, se ele existir
+                    if (flashTarget) {
+                        flashTarget.classList.add('flash-on-scroll'); 
+                        
+                        flashTarget.addEventListener('animationend', () => {
+                            flashTarget.classList.remove('flash-on-scroll');
+                        }, { once: true });
+                    }
+                    // =================================================================
                 }
             });
         });
