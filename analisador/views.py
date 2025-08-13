@@ -7,6 +7,8 @@ from django.urls import reverse
 from django.contrib import messages # Importa o sistema de mensagens do Django
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login
+from django.shortcuts import render, redirect, get_object_or_404 
+
 
 @login_required
 def pagina_inicial(request):
@@ -342,21 +344,44 @@ def apagar_regra(request, regra_id):
 
 @login_required
 def editar_transacao(request, transacao_id):
-    transacao = Transacao.objects.get(id=transacao_id, usuario=request.user)
+    # Usamos get_object_or_404 para mais segurança. Se a transação não existe, dá erro 404.
+    transacao = get_object_or_404(Transacao, id=transacao_id, usuario=request.user)
 
     if request.method == 'POST':
-        transacao.descricao = request.POST.get('descricao')
-        transacao.subtopico = request.POST.get('subtopico')
-
-        # ATIVA A "TRAVA"
-        transacao.categorizacao_manual = True
-
-        transacao.save()
-        # Redireciona de volta para o relatório do extrato original
+        novo_subtopico = request.POST.get('subtopico')
+        
+        if novo_subtopico:
+            # --- Passo 1: Atualiza a transação individual (como já fazia) ---
+            transacao.subtopico = novo_subtopico
+            transacao.categorizacao_manual = True # Continua travando para garantir
+            transacao.save()
+            
+            # --- Passo 2 (LÓGICA NOVA): Atualiza ou cria a regra correspondente ---
+            
+            # Usamos a propriedade 'descricao_limpa' do modelo para pegar a palavra-chave ideal
+            palavra_chave = transacao.descricao_limpa
+            
+            # Usamos update_or_create:
+            # Ele tenta encontrar uma Regra com essa palavra_chave e tipo.
+            # Se encontrar, atualiza a 'categoria'.
+            # Se não encontrar, cria uma nova regra com esses dados.
+            Regra.objects.update_or_create(
+                usuario=request.user,
+                palavra_chave=palavra_chave,
+                tipo_transacao=transacao.topico,
+                defaults={'categoria': novo_subtopico}
+            )
+            
+            messages.success(request, f"Transação atualizada! A regra para '{palavra_chave}' agora aponta para '{novo_subtopico}'.")
+        
+        # Redireciona de volta para o relatório original para ver o resultado
         return redirect('pagina_relatorio', extrato_id=transacao.extrato.id)
 
+    # A lógica para GET (mostrar o formulário) continua a mesma
     contexto = {
-        'transacao': transacao
+        'transacao': transacao,
+        # Adiciona categorias existentes para sugestão também na página de edição
+        'categorias_existentes': list(Regra.objects.filter(usuario=request.user).values_list('categoria', flat=True).distinct().order_by('categoria'))
     }
     return render(request, 'analisador/editar_transacao.html', contexto)
 

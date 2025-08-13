@@ -151,3 +151,26 @@ body {
     background-color: rgba(13, 110, 253, 0.15) !important; /* Azul primário com baixa opacidade */
     transition: background-color 0.2s ease-in-out; /* Transição suave */
 }
+
+
+/* Estilizando o input que usa o datalist */
+input[list="lista-categorias-sugeridas"] {
+    background-color: #0c1c2c; /* Fundo azul escuro, igual à sidebar */
+    border: 1px solid #34495e;
+    color: #f8f9fa; /* Texto branco */
+    transition: all 0.2s ease-in-out;
+}
+
+/* Efeito de foco para dar um feedback visual */
+input[list="lista-categorias-sugeridas"]:focus {
+    background-color: #1a2a38;
+    border-color: #0d6efd; /* Azul primário do Bootstrap */
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    outline: none;
+}
+
+/* Estilizando o texto do placeholder */
+input[list="lista-categorias-sugeridas"]::placeholder {
+    color: #6c757d; /* Cinza um pouco mais claro */
+    opacity: 1;
+}
