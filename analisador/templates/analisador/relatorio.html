@@ -117,7 +117,11 @@
                                 <td>
                                     <input class="form-check-input checkbox-transacao" type="checkbox" value="{{ linha.Remetente_Destinatario }}|{{ linha.Tópico }}">
                                 </td>
-                                <td>{{ linha.Tópico }}</td>
+                                <td>
+                                    <span class="badge rounded-pill {% if linha.Tópico == 'Despesa' %}text-bg-danger{% else %}text-bg-success{% endif %}">
+                                        {{ linha.Tópico }}
+                                    </span>
+                                </td>
                                 <td>{{ linha.Data }}</td>
                                 <td>
                                     <span class="{% if linha.origem_descricao == 'Historico' %}destaque-historico{% endif %}">
