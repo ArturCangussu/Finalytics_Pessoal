@@ -174,3 +174,9 @@ input[list="lista-categorias-sugeridas"]::placeholder {
     color: #6c757d; /* Cinza um pouco mais claro */
     opacity: 1;
 }
+
+
+
+.sidebar-header img {
+    border-radius: 50%;
+}
