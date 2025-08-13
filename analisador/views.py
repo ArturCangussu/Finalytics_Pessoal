@@ -112,6 +112,10 @@ def pagina_relatorio(request, extrato_id):
         }
         return render(request, 'analisador/relatorio.html', contexto)
 
+    categorias_existentes = list(Regra.objects.filter(
+        usuario=request.user
+    ).values_list('categoria', flat=True).distinct().order_by('categoria'))
+
     df = pd.DataFrame(list(transacoes.values('data', 'descricao', 'valor', 'topico', 'subtopico')))
     df['valor'] = pd.to_numeric(df['valor'], errors='coerce').fillna(0)
     
@@ -184,6 +188,7 @@ def pagina_relatorio(request, extrato_id):
         'dados_grafico': dados_grafico,
         'labels_grafico_receitas': labels_grafico_receitas,
         'dados_grafico_receitas': dados_grafico_receitas,
+        'categorias_existentes': categorias_existentes,
     }
 
     return render(request, 'analisador/relatorio.html', contexto)

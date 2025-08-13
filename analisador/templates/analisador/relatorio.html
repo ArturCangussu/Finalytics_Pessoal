@@ -94,6 +94,11 @@
             <p>Marque as transações abaixo e defina uma categoria para todas de uma vez no final da tabela.</p>
             
             {% if not nao_categorizadas.empty %}
+            <datalist id="lista-categorias-sugeridas">
+                {% for categoria in categorias_existentes %}
+                    <option value="{{ categoria }}">
+                {% endfor %}
+            </datalist>
                 <div class="table-responsive">
                     <table class="table table-hover">
                         <thead>
@@ -128,7 +133,9 @@
                                         <input type="hidden" name="palavra_chave" value="{{ linha.Remetente_Destinatario }}">
                                         <input type="hidden" name="extrato_id" value="{{ extrato.id }}">
                                         <input type="hidden" name="tipo_transacao" value="{{ linha.Tópico }}">
-                                        <input type="text" name="categoria" class="form-control form-control-sm me-2" placeholder="Categoria individual" required>
+                                        <input type="text" name="categoria" class="form-control form-control-sm me-2" placeholder="Digite ou Selecione" required
+                                        list="lista-categorias-sugeridas"
+                                        autocomplete="off">
                                         <button type="submit" class="btn btn-sm btn-outline-primary">Salvar</button>
                                     </form>
                                 </td>
