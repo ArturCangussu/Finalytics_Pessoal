@@ -44,24 +44,50 @@ def pagina_inicial(request):
 def gerenciar_regras(request):
     extrato_id_origem = request.GET.get('from_report')
 
+    # Lógica para ADICIONAR uma nova regra (quando o formulário é enviado via POST)
     if request.method == 'POST':
         nova_palavra = request.POST.get('palavra_chave')
         nova_categoria = request.POST.get('categoria')
 
         if nova_palavra and nova_categoria:
-            Regra.objects.create(
+            # Assumimos que regras criadas manualmente aqui são para Despesas por padrão.
+            # Você pode mudar isso ou adicionar um campo de seleção no formulário se precisar.
+            Regra.objects.get_or_create(
                 usuario=request.user,
                 palavra_chave=nova_palavra,
-                categoria=nova_categoria
+                tipo_transacao='Despesa',
+                defaults={'categoria': nova_categoria}
             )
         
+        # Redireciona para a mesma página para evitar reenvio do formulário
         if extrato_id_origem:
             return redirect(f"{reverse('gerenciar_regras')}?from_report={extrato_id_origem}")
         return redirect('gerenciar_regras')
 
+    # Lógica para EXIBIR as regras (quando a página é carregada via GET)
+    
+    # 1. Busca todas as categorias únicas que o usuário já criou para usar no filtro
+    todas_as_categorias = list(
+        Regra.objects.filter(usuario=request.user)
+        .values_list('categoria', flat=True)
+        .distinct()
+        .order_by('categoria')
+    )
+
+    # 2. Verifica se o usuário selecionou uma categoria no filtro
+    categoria_selecionada = request.GET.get('categoria_filtro')
+
+    # 3. Começa com todas as regras do usuário
     regras_do_usuario = Regra.objects.filter(usuario=request.user)
+
+    # 4. Se uma categoria foi selecionada, aplica o filtro na consulta
+    if categoria_selecionada:
+        regras_do_usuario = regras_do_usuario.filter(categoria=categoria_selecionada)
+
     contexto = {
-        'regras': regras_do_usuario,
+        'regras': regras_do_usuario.order_by('palavra_chave'),
+        'todas_as_categorias': todas_as_categorias,
+        'categoria_selecionada': categoria_selecionada,
         'active_page': 'regras',
         'extrato_id_origem': extrato_id_origem
     }

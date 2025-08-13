@@ -4,74 +4,99 @@
 
 {% block content %}
     <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
-        <h1 class="h2 mb-0"><i class="bi bi-pencil-square me-3"></i>Gerenciar Regras de Categorização</h1>
+        <h1 class="h2 mb-0"><i class="bi bi-pencil-square me-3"></i>Gerenciar Regras</h1>
         {% if extrato_id_origem %}
-    <div class="mb-3">
-        <a href="{% url 'reprocessar_relatorio' extrato_id=extrato_id_origem %}" class="btn btn-secondary">
-
-            <i class="bi bi-arrow-left-circle"></i> Voltar para o Relatório Atualizado
-        </a>
-    </div>
-{% endif %}
+            <a href="{% url 'reprocessar_relatorio' extrato_id=extrato_id_origem %}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left-circle"></i> Voltar ao Relatório
+            </a>
+        {% endif %}
     </div>
 
-    <!-- Card para adicionar nova regra -->
     <div class="card shadow-sm mb-4">
-        <div class="card-header">
-            <h5 class="card-title mb-0">Adicionar Nova Regra</h5>
-        </div>
+        <div class="card-header"><h5 class="card-title mb-0">Adicionar Nova Regra</h5></div>
         <div class="card-body">
-            <form method="POST" class="row g-3 align-items-center">
+            <form method="POST" class="row g-3 align-items-end">
                 {% csrf_token %}
                 <div class="col-md-5">
-                    <label for="palavra_chave" class="visually-hidden">Palavra-Chave</label>
-                    <input type="text" name="palavra_chave" class="form-control" id="palavra_chave" placeholder="Palavra-chave (ex: IFOOD)" required>
+                    <label for="palavra_chave" class="form-label">Palavra-Chave:</label>
+                    <input type="text" name="palavra_chave" class="form-control" id="palavra_chave" placeholder="Ex: IFOOD" required>
                 </div>
                 <div class="col-md-5">
-                    <label for="categoria" class="visually-hidden">Categoria</label>
-                    <input type="text" name="categoria" class="form-control" id="categoria" placeholder="Nome da Categoria (ex: Alimentação)" required>
+                    <label for="categoria" class="form-label">Nome da Categoria:</label>
+                    <input type="text" name="categoria" class="form-control" id="categoria" placeholder="Ex: Alimentação" required list="lista-categorias-existentes">
                 </div>
                 <div class="col-md-2">
                     <button type="submit" class="btn btn-primary w-100">Adicionar</button>
                 </div>
             </form>
+            <datalist id="lista-categorias-existentes">
+                {% for categoria in todas_as_categorias %}
+                    <option value="{{ categoria }}">
+                {% endfor %}
+            </datalist>
         </div>
     </div>
 
-    <!-- Card com a lista de regras existentes -->
-    <div class="card shadow-sm">
-        <div class="card-header">
-            <h5 class="card-title mb-0">Regras Salvas</h5>
-        </div>
+    <div class="card shadow-sm mb-4">
+        <div class="card-header"><h5 class="card-title mb-0"><i class="bi bi-funnel"></i> Filtros</h5></div>
         <div class="card-body">
-             <table class="table table-hover">
-                <thead>
-                    <tr>
-                        <th>Palavra-Chave</th>
-                        <th>Categoria</th>
-                        <th>Ação</th>
-                    </tr>
-                </thead>
-                <tbody>
+            <form method="GET" action="{% url 'gerenciar_regras' %}" class="row g-3 align-items-center">
+                <div class="col-md-10">
+                    <label for="categoria_filtro" class="form-label">Filtrar por Categoria:</label>
+                    <select name="categoria_filtro" id="categoria_filtro" class="form-select">
+                        <option value="">-- Todas as Categorias --</option>
+                        {% for categoria in todas_as_categorias %}
+                            <option value="{{ categoria }}" {% if categoria == categoria_selecionada %}selected{% endif %}>
+                                {{ categoria }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-info w-100">Filtrar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header"><h5 class="card-title mb-0">Regras Salvas</h5></div>
+        <div class="card-body p-0">
+             <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Palavra-Chave</th>
+                            <th>Categoria</th>
+                            <th>Tipo</th> <th class="text-end">Ações</th>
+                        </tr>
+                    </thead>
                     <tbody>
                         {% for regra in regras %}
                         <tr>
                             <td>{{ regra.palavra_chave }}</td>
                             <td>{{ regra.categoria }}</td>
                             <td>
-                                <!-- Botão de Editar -->
-                                <a href="{% url 'editar_regra' regra_id=regra.id %}" class="btn btn-sm btn-outline-warning me-2">Editar</a>
-                                
-                                <!-- Formulário/Botão de Apagar -->
-                                <form action="{% url 'apagar_regra' regra_id=regra.id %}" method="POST" class="d-inline" onsubmit="return confirm('Tem certeza que deseja apagar esta regra?');">
+                                <span class="badge {% if regra.tipo_transacao == 'Despesa' %}text-bg-danger{% else %}text-bg-success{% endif %}">
+                                    {{ regra.tipo_transacao }}
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                <a href="{% url 'editar_regra' regra_id=regra.id %}" class="btn btn-sm btn-outline-warning">Editar</a>
+                                <form action="{% url 'apagar_regra' regra_id=regra.id %}" method="POST" class="d-inline" onsubmit="return confirm('Tem certeza?');">
                                     {% csrf_token %}
                                     <button type="submit" class="btn btn-sm btn-outline-danger">Apagar</button>
                                 </form>
                             </td>
                         </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center text-muted py-4">Nenhuma regra encontrada. Tente limpar o filtro ou adicione uma nova regra.</td>
+                        </tr>
                         {% endfor %}
                     </tbody>
-            </table>
+                </table>
+            </div>
         </div>
     </div>
 {% endblock %}
