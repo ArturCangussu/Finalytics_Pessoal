@@ -37,7 +37,7 @@ Em resumo, o Finanalytics Pessoal transforma um extrato confuso em insights acio
 
 -   ✅ Upload de extratos bancários em formato Excel (.xlsx).
 -   ✅ Sistema de regras customizável para categorização inteligente de transações.
--   ✅ Geração automática de relatórios de despesas por categoria.
+-   ✅ Geração automática de relatórios de despesas e receitas por categoria.
 -   ✅ Interface web para upload, gerenciamento de regras e visualização de dados.
 
 ---
