@@ -6,9 +6,24 @@ Aplicação web Django que automatiza a análise e categorização de extratos b
 
 ### 📸 Screenshot
 
-<p align="center">
-  <img src="[COLE O LINK DA IMAGEM AQUI]" width="80%" alt="Dashboard do Finanalytics Pessoal">
-</p>
+<table align="center">
+  <tr>
+    <td align="center">
+      <img src="https://github.com/user-attachments/assets/038218ce-19cf-41fc-8f34-b5d9b564c64b" width="100%" alt="Screenshot 1 do Projeto">
+    </td>
+    <td align="center">
+      <img src="https://github.com/user-attachments/assets/e82eb344-2ed3-455a-aa11-a227cad7a08f" width="100%" alt="Screenshot 2 do Projeto">
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="https://github.com/user-attachments/assets/19472538-20fd-4622-b42e-77ba873b25ef" width="100%" alt="Screenshot 3 do Projeto">
+    </td>
+    <td align="center">
+      <img src="https://github.com/user-attachments/assets/195db0c0-8c41-4f1e-a2d6-812455c7c6d2" width="100%" alt="Screenshot 4 do Projeto">
+    </td>
+  </tr>
+</table>
 
 ---
 
