@@ -22,12 +22,10 @@ def pagina_inicial(request):
             messages.error(request, 'Por favor, preencha todos os campos.')
             return render(request, 'analisador/pagina_inicial.html', contexto)
         
-        # --- VALIDAÇÃO DO TIPO DE ARQUIVO ---
-        # Verifica se o nome do arquivo termina com .xlsx
+
         if not arquivo_extrato.name.endswith('.xlsx'):
             messages.error(request, 'Erro: O arquivo do extrato deve ser no formato .xlsx.')
             return render(request, 'analisador/pagina_inicial.html', contexto)
-        # --- FIM DA VALIDAÇÃO ---
 
         novo_extrato = Extrato.objects.create(
             usuario=request.user,
@@ -50,23 +48,18 @@ def gerenciar_regras(request):
         nova_categoria = request.POST.get('categoria')
 
         if nova_palavra and nova_categoria:
-            # Assumimos que regras criadas manualmente aqui são para Despesas por padrão.
-            # Você pode mudar isso ou adicionar um campo de seleção no formulário se precisar.
             Regra.objects.get_or_create(
                 usuario=request.user,
                 palavra_chave=nova_palavra,
                 tipo_transacao='Despesa',
                 defaults={'categoria': nova_categoria}
             )
-        
-        # Redireciona para a mesma página para evitar reenvio do formulário
+
         if extrato_id_origem:
             return redirect(f"{reverse('gerenciar_regras')}?from_report={extrato_id_origem}")
         return redirect('gerenciar_regras')
 
-    # Lógica para EXIBIR as regras (quando a página é carregada via GET)
-    
-    # 1. Busca todas as categorias únicas que o usuário já criou para usar no filtro
+
     todas_as_categorias = list(
         Regra.objects.filter(usuario=request.user)
         .values_list('categoria', flat=True)
@@ -129,8 +122,6 @@ def pagina_relatorio(request, extrato_id):
     transacoes = Transacao.objects.filter(extrato=extrato)
 
     if not transacoes.exists():
-        # ... (seu código para relatório vazio continua igual) ...
-        # Adaptei o contexto vazio para já incluir as novas variáveis
         contexto = {
             'extrato': extrato, 'total_receitas': '0,00', 'total_despesas': '0,00', 'saldo_liquido': '0,00',
             'resumo_despesas': pd.DataFrame(), 'resumo_receitas': pd.DataFrame(), 'nao_categorizadas': pd.DataFrame(),
@@ -147,7 +138,6 @@ def pagina_relatorio(request, extrato_id):
     df = pd.DataFrame(list(transacoes.values('data', 'descricao', 'valor', 'topico', 'subtopico')))
     df['valor'] = pd.to_numeric(df['valor'], errors='coerce').fillna(0)
     
-    # --- LÓGICA DE LIMPEZA (igual a sua) ---
     def _limpar_descricao_inteligente(descricao):
         if pd.isna(descricao) or not str(descricao).strip():
             return str(descricao)
@@ -163,7 +153,6 @@ def pagina_relatorio(request, extrato_id):
             pass
         return descricao_str
     df['DescricaoLimpa'] = df['descricao'].apply(_limpar_descricao_inteligente)
-    # --- FIM DA LÓGICA DE LIMPEZA ---
 
     df = df.rename(columns={
         'subtopico': 'Subtópico', 'valor': 'Valor', 'topico': 'Tópico',
@@ -194,11 +183,11 @@ def pagina_relatorio(request, extrato_id):
     else:
         nao_cat = nao_cat_df[colunas_desejadas]
     
-    # Dados para o gráfico de Despesas (existente)
+
     labels_grafico = list(resumo_d_series.index)
     dados_grafico = [float(valor) for valor in resumo_d_series.abs().values]
 
-    # Dados para o gráfico de Receitas (NOVO)
+
     labels_grafico_receitas = list(resumo_r_series.index)
     dados_grafico_receitas = [float(valor) for valor in resumo_r_series.abs().values]
     
@@ -382,15 +371,10 @@ def editar_transacao(request, transacao_id):
             transacao.categorizacao_manual = True # Continua travando para garantir
             transacao.save()
             
-            # --- Passo 2 (LÓGICA NOVA): Atualiza ou cria a regra correspondente ---
-            
-            # Usamos a propriedade 'descricao_limpa' do modelo para pegar a palavra-chave ideal
+
             palavra_chave = transacao.descricao_limpa
             
-            # Usamos update_or_create:
-            # Ele tenta encontrar uma Regra com essa palavra_chave e tipo.
-            # Se encontrar, atualiza a 'categoria'.
-            # Se não encontrar, cria uma nova regra com esses dados.
+
             Regra.objects.update_or_create(
                 usuario=request.user,
                 palavra_chave=palavra_chave,
@@ -406,7 +390,6 @@ def editar_transacao(request, transacao_id):
     # A lógica para GET (mostrar o formulário) continua a mesma
     contexto = {
         'transacao': transacao,
-        # Adiciona categorias existentes para sugestão também na página de edição
         'categorias_existentes': list(Regra.objects.filter(usuario=request.user).values_list('categoria', flat=True).distinct().order_by('categoria'))
     }
     return render(request, 'analisador/editar_transacao.html', contexto)
@@ -455,7 +438,6 @@ def criar_regras_em_lote(request):
                     )
                     regras_criadas += 1
                 except ValueError:
-                    # Ignora itens mal formatados, se houver
                     continue
             
             messages.success(request, f'{regras_criadas} regras foram criadas/atualizadas com a categoria "{nova_categoria}".')

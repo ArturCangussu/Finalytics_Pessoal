@@ -1,4 +1,4 @@
-/* Define as cores que você pediu como variáveis globais */
+
 :root {
     --bs-dark-rgb: 4, 28, 50; /* Azul Marinho para o fundo */
     --bs-body-color: #f8f9fa; /* Branco/Cinza claro para o texto */
@@ -18,7 +18,7 @@ body {
     font-family: 'Roboto Mono', monospace;
 }
 
-/* --- CORREÇÃO PRINCIPAL DO LAYOUT --- */
+
 .sidebar {
     width: 280px;
     min-height: 100vh;
@@ -32,7 +32,7 @@ body {
     padding: 2rem; /* Adiciona espaçamento interno */
     width: calc(100% - 280px); /* FORÇA a largura a ocupar o resto */
 }
-/* --- FIM DA CORREÇÃO --- */
+
 
 
 /* Estilo da Sidebar (continua o mesmo) */
